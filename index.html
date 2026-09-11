@@ -164,8 +164,11 @@
   .kpi-label .tag{font-size:11.5px;font-weight:600;background:var(--ink);color:#fff;padding:2px 7px;border-radius:8px;opacity:0;transition:opacity .12s;}
   .kpi.selected .kpi-label .tag{opacity:1;}
   .kpi.hero.selected .kpi-label .tag{background:#fff;color:#1B3FCC;}
-  .kpi.filtering{box-shadow:0 0 0 3px rgba(46,91,255,0.35), var(--shadow-card);}
-  .kpi.hero.filtering{box-shadow:0 0 0 3px rgba(255,255,255,0.6), 0 6px 18px rgba(46,91,255,0.28);}
+  .kpi.filtering{box-shadow:0 0 0 3px var(--primary), var(--shadow-card);}
+  .kpi.teal.filtering{box-shadow:0 0 0 3px var(--teal), var(--shadow-card);}
+  .kpi.gold.filtering{box-shadow:0 0 0 3px var(--gold), var(--shadow-card);}
+  .kpi.red.filtering{box-shadow:0 0 0 3px var(--red), var(--shadow-card);}
+  .kpi.hero.filtering{box-shadow:0 0 0 3px rgba(255,255,255,0.9), 0 6px 18px rgba(46,91,255,0.28);}
   .kpi-value{font-size:32px;font-weight:700;color:var(--ink);letter-spacing:-0.01em;}
   .kpi.hero .kpi-value{font-size:40px;}
   .kpi.teal .kpi-value{color:var(--teal);}
@@ -278,8 +281,8 @@
   }
   .table-scroll{max-height:520px;overflow:auto;}
   tfoot td{
-    padding:11px 12px;text-align:right;font-weight:700;background:var(--ink);color:#fff;
-    border-top:2px solid var(--ink);position:sticky;bottom:0;
+    padding:11px 12px;text-align:right;font-weight:800;background:#E4E9F9;color:#1B3FCC;
+    border-top:3px solid #2E5BFF;position:sticky;bottom:0;
   }
   tfoot td:first-child{text-align:left;}
   .pill{
@@ -436,7 +439,7 @@
         <div class="chart-wrap donut-wrap"><canvas id="chartDivDonut"></canvas></div>
       </div>
       <div class="chart-card">
-        <h3>อันดับสำนักงาน (Top 10)</h3>
+        <h3>อันดับสำนักงาน (ทั้งหมด)</h3>
         <div class="chart-note" id="noteOffice">เรียงตามเมตริกที่เลือก</div>
         <div class="rank-list" id="rankOffice"></div>
       </div>
@@ -470,8 +473,8 @@
               <th class="text-left" data-key="office_name" data-type="str">กอง / สำนักงาน<span class="arrow"></span></th>
               <th data-key="proj_count" data-type="num">โครงการ<span class="arrow"></span></th>
               <th data-key="units_total" data-type="num">หน่วยเต็ม<span class="arrow"></span></th>
-              <th data-key="active_total" data-type="num">หน่วย Active<span class="arrow"></span></th>
               <th data-key="units_transferred" data-type="num">โอนแล้ว<span class="arrow"></span></th>
+              <th data-key="active_total" data-type="num">หน่วย Active<span class="arrow"></span></th>
               <th data-key="vacant_ready_total" data-type="num">หน่วยว่างพร้อมขาย<span class="arrow"></span></th>
               <th data-key="vacant_notready_total" data-type="num">หน่วยว่างไม่พร้อมขาย<span class="arrow"></span></th>
               <th data-key="pct_transferred" data-type="num">%โอนแล้ว<span class="arrow"></span></th>
@@ -758,13 +761,13 @@ function updateCharts(rows){
   chDivDonut.data.datasets[0].data = divVals;
   chDivDonut.update();
 
-  // ranking by สำนักงาน (top 10) — ตัดคำว่า "สำนักงาน" ออกให้ป้ายชื่อสั้นลง
+  // ranking by สำนักงาน (ทั้งหมด) — ตัดคำว่า "สำนักงาน" ออกให้ป้ายชื่อสั้นลง
   const offices = uniqueSorted(rows.map(r=>r.office_name));
   let officeAgg = offices.map(o=>({
     name: o.replace(/สำนักงาน/g,'').trim() || o,
     val: sumBy(rows.filter(r=>r.office_name===o), m.key)
   }));
-  officeAgg = officeAgg.filter(o=>o.val>0).sort((a,b)=>b.val-a.val).slice(0,10);
+  officeAgg = officeAgg.filter(o=>o.val>0).sort((a,b)=>b.val-a.val);
   renderRankList('rankOffice', officeAgg);
 
   // ranking by โครงการ (top 10)
@@ -894,8 +897,8 @@ function renderSummary(rows){
         <td>กอง ${g.div} <span style="font-weight:400;opacity:.75;">(${g.offices.length} สำนักงาน)</span></td>
         <td class="tabular">${t.proj_count.toLocaleString('th-TH')}</td>
         <td class="tabular">${fmt(t.units_total)}</td>
-        <td class="tabular"><span class="active-chip">${fmt(t.active_total)}</span></td>
         <td class="tabular">${fmt(t.units_transferred)}</td>
+        <td class="tabular"><span class="active-chip">${fmt(t.active_total)}</span></td>
         <td class="tabular">${fmt(t.vacant_ready_total)}</td>
         <td class="tabular">${fmt(t.vacant_notready_total)}</td>
         <td class="tabular">${pct(t.pct_transferred)}%</td>
@@ -905,8 +908,8 @@ function renderSummary(rows){
         <td class="text-left">${r.office_name}</td>
         <td class="tabular">${r.proj_count.toLocaleString('th-TH')}</td>
         <td class="tabular">${fmt(r.units_total)}</td>
-        <td class="tabular"><span class="active-chip">${fmt(r.active_total)}</span></td>
         <td class="tabular">${fmt(r.units_transferred)}</td>
+        <td class="tabular"><span class="active-chip">${fmt(r.active_total)}</span></td>
         <td class="tabular">${fmt(r.vacant_ready_total)}</td>
         <td class="tabular">${fmt(r.vacant_notready_total)}</td>
         <td class="tabular">${pct(r.pct_transferred)}%</td>
@@ -925,8 +928,8 @@ function renderSummary(rows){
     <td>รวมทั้งหมดทุกกอง</td>
     <td class="tabular">${sumBy(allOffices,'proj_count').toLocaleString('th-TH')}</td>
     <td class="tabular">${fmt(t_total)}</td>
-    <td class="tabular"><span class="active-chip">${fmt(t_active)}</span></td>
     <td class="tabular">${fmt(t_trans)}</td>
+    <td class="tabular"><span class="active-chip">${fmt(t_active)}</span></td>
     <td class="tabular">${fmt(t_vac_ready)}</td>
     <td class="tabular">${fmt(t_vac_notready)}</td>
     <td class="tabular">${t_total>0? pct(t_trans/t_total*100):'0.0'}%</td>
@@ -1074,11 +1077,19 @@ function renderChips(){
   if(q){
     chips.push(`<span class="chip" style="background:${FILTER_META.fSearch.color};" data-clear="fSearch">ค้นหา: “${escapeHtml(q)}”<button type="button" aria-label="ลบตัวกรอง">✕</button></span>`);
   }
+  if(kpiFilterOn){
+    const m = METRIC_DEF[selectedMetric];
+    chips.push(`<span class="chip" style="background:${m.color};" data-clear="kpiFilter">การ์ด: ${escapeHtml(m.label)}<button type="button" aria-label="ยกเลิกกรองจากการ์ด">✕</button></span>`);
+  }
   chipBar.innerHTML = chips.join('');
   chipBar.querySelectorAll('.chip button').forEach(btn=>{
     btn.addEventListener('click', ()=>{
       const id = btn.parentElement.getAttribute('data-clear');
-      document.getElementById(id).value = '';
+      if(id==='kpiFilter'){
+        kpiFilterOn = false;
+      } else {
+        document.getElementById(id).value = '';
+      }
       refresh();
     });
   });
@@ -1173,8 +1184,8 @@ function buildSummaryReportHTML(rows){
       <td style="text-align:left;font-weight:700;color:${g.style.text};">กอง ${escapeHtml(g.div)} (${g.offices.length} สำนักงาน)</td>
       <td>${t.proj_count.toLocaleString('th-TH')}</td>
       <td>${fmt(t.units_total)}</td>
-      <td>${fmt(t.active_total)}</td>
       <td>${fmt(t.units_transferred)}</td>
+      <td>${fmt(t.active_total)}</td>
       <td>${fmt(t.vacant_ready_total)}</td>
       <td>${fmt(t.vacant_notready_total)}</td>
       <td>${pct(t.pct_transferred)}%</td>
@@ -1183,8 +1194,8 @@ function buildSummaryReportHTML(rows){
       <td style="text-align:left;padding-left:22px;">${escapeHtml(r.office_name)}</td>
       <td>${r.proj_count.toLocaleString('th-TH')}</td>
       <td>${fmt(r.units_total)}</td>
-      <td>${fmt(r.active_total)}</td>
       <td>${fmt(r.units_transferred)}</td>
+      <td>${fmt(r.active_total)}</td>
       <td>${fmt(r.vacant_ready_total)}</td>
       <td>${fmt(r.vacant_notready_total)}</td>
       <td>${pct(r.pct_transferred)}%</td>
@@ -1197,15 +1208,15 @@ function buildSummaryReportHTML(rows){
   const body = `<h2>ตารางสรุปรายกอง / สำนักงาน</h2>
   <table>
     <thead><tr>
-      <th style="text-align:left;">กอง / สำนักงาน</th><th>โครงการ</th><th>หน่วยเต็ม</th><th>หน่วย Active</th><th>โอนแล้ว</th><th>หน่วยว่างพร้อมขาย</th><th>หน่วยว่างไม่พร้อมขาย</th><th>%โอนแล้ว</th>
+      <th style="text-align:left;">กอง / สำนักงาน</th><th>โครงการ</th><th>หน่วยเต็ม</th><th>โอนแล้ว</th><th>หน่วย Active</th><th>หน่วยว่างพร้อมขาย</th><th>หน่วยว่างไม่พร้อมขาย</th><th>%โอนแล้ว</th>
     </tr></thead>
     <tbody>${summaryRowsHtml}</tbody>
     <tfoot><tr>
       <td style="text-align:left;">รวมทั้งหมดทุกกอง</td>
       <td>${sumBy(allOffices,'proj_count').toLocaleString('th-TH')}</td>
       <td>${fmt(t_total)}</td>
-      <td>${fmt(t_active)}</td>
       <td>${fmt(t_trans)}</td>
+      <td>${fmt(t_active)}</td>
       <td>${fmt(t_vac_ready)}</td>
       <td>${fmt(t_vac_notready)}</td>
       <td>${t_total>0? pct(t_trans/t_total*100):'0.0'}%</td>
@@ -1222,8 +1233,8 @@ document.getElementById('btnSummaryPdf').addEventListener('click', ()=>{
 document.getElementById('btnSummaryExcel').addEventListener('click', ()=>{
   const summarySheetData = (window._currentSummary||[]).map(r=>({
     'กอง': r.div, 'สำนักงาน': r.office_name, 'จำนวนโครงการ': r.proj_count,
-    'หน่วยเต็ม': r.units_total,
-    'หน่วย Active': r.active_total, 'โอนกรรมสิทธิ์แล้ว': r.units_transferred,
+    'หน่วยเต็ม': r.units_total, 'โอนกรรมสิทธิ์แล้ว': r.units_transferred,
+    'หน่วย Active': r.active_total,
     'หน่วยว่างพร้อมขาย': r.vacant_ready_total, 'หน่วยว่างไม่พร้อมขาย': r.vacant_notready_total,
     '% โอนแล้ว': Math.round(r.pct_transferred*10)/10
   }));
