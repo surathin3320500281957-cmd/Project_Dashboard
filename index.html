@@ -111,6 +111,10 @@
   .btn:focus-visible{outline:2px solid var(--primary);outline-offset:1px;}
   .btn-primary{background:var(--primary);border-color:var(--primary);color:#fff;}
   .btn-primary:hover{background:var(--primary-dark);}
+  .btn-pdf{background:var(--red);border-color:var(--red);color:#fff;}
+  .btn-pdf:hover{background:#E23F44;}
+  .btn-excel{background:var(--green);border-color:var(--green);color:#fff;}
+  .btn-excel:hover{background:#16A34A;}
   .btn-ghost{border-color:transparent;color:var(--slate);}
   .btn-ghost:hover{background:var(--line-soft);}
   .result-count{font-size:13px;color:var(--slate);white-space:nowrap;}
@@ -315,8 +319,6 @@
     <div class="filter-spacer"></div>
     <span class="result-count" id="resultCount"></span>
     <button class="btn btn-ghost" id="btnReset">ล้างตัวกรอง</button>
-    <button class="btn" id="btnExportExcel">⬇ ส่งออก Excel</button>
-    <button class="btn btn-primary" id="btnExportPdf">⬇ ส่งออก PDF</button>
   </div>
 </div>
 
@@ -366,6 +368,13 @@
       <span class="section-sub">แถวสีคือยอดรวมของกอง · แถวย่อยด้านล่างคือแต่ละสำนักงาน · คลิกหัวคอลัมน์ตัวเลขเพื่อเรียงลำดับสำนักงานในกอง</span>
     </div>
     <div class="table-card">
+      <div class="table-toolbar no-print">
+        <span class="result-count" id="summaryCount"></span>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-pdf" id="btnSummaryPdf">📄 ส่งออก PDF</button>
+          <button class="btn btn-excel" id="btnSummaryExcel">📊 ส่งออก Excel</button>
+        </div>
+      </div>
       <div class="table-scroll">
         <table id="summaryTable">
           <thead>
@@ -392,6 +401,13 @@
       <span class="section-sub">คลิกแถวเพื่อดูรายละเอียดเพิ่มเติม</span>
     </div>
     <div class="table-card">
+      <div class="table-toolbar no-print">
+        <span class="result-count" id="detailCount"></span>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-pdf" id="btnDetailPdf">📄 ส่งออก PDF</button>
+          <button class="btn btn-excel" id="btnDetailExcel">📊 ส่งออก Excel</button>
+        </div>
+      </div>
       <div class="table-scroll">
         <table id="detailTable">
           <thead>
@@ -723,6 +739,9 @@ function renderSummary(rows){
     <td class="tabular">${t_total>0? pct(t_trans/t_total*100):'0.0'}%</td>
   `;
   window._currentSummary = allOffices;
+  window._currentGroups = groups;
+  const scEl = document.getElementById('summaryCount');
+  if(scEl) scEl.innerHTML = `พบ <b>${allOffices.length.toLocaleString('th-TH')}</b> สำนักงาน ใน <b>${groups.length.toLocaleString('th-TH')}</b> กอง`;
 }
 
 /* ---------- Detail table ---------- */
@@ -782,6 +801,8 @@ function renderDetail(rows){
     });
   });
   window._currentDetail = list;
+  const dcEl = document.getElementById('detailCount');
+  if(dcEl) dcEl.innerHTML = `พบ <b>${list.length.toLocaleString('th-TH')}</b> โครงการ`;
 }
 
 /* ---------- Sorting ---------- */
@@ -831,19 +852,170 @@ document.getElementById('btnReset').addEventListener('click', ()=>{
   refresh();
 });
 
-/* ---------- Export Excel ---------- */
-document.getElementById('btnExportExcel').addEventListener('click', ()=>{
-  const wb = XLSX.utils.book_new();
+/* ---------- Shared helpers ---------- */
+function escapeHtml(str){
+  return String(str).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function currentFilterText(){
+  const filterVals = filterIds.map(id=>document.getElementById(id).value).filter(Boolean);
+  const q = document.getElementById('fSearch').value.trim();
+  const parts = [...filterVals];
+  if(q) parts.push(`ค้นหา "${q}"`);
+  return parts.length? parts.join(' · ') : 'ไม่มีการกรอง (แสดงข้อมูลทั้งหมด)';
+}
+function openReportTab(html){
+  const win = window.open('', '_blank');
+  if(!win){
+    alert('เบราว์เซอร์บล็อกการเปิดแท็บใหม่ กรุณาอนุญาต pop-up สำหรับหน้านี้แล้วลองอีกครั้ง');
+    return;
+  }
+  win.document.open();
+  win.document.write(html);
+  win.document.close();
+}
+function reportShell(title, metaHtml, bodyHtml, footNote){
+  return `<!DOCTYPE html>
+<html lang="th"><head><meta charset="UTF-8">
+<title>${title}</title>
+<style>
+  @page { size: A4 landscape; margin: 14mm; }
+  *{box-sizing:border-box;}
+  body{font-family:'Sarabun','Tahoma',sans-serif;color:#161B2E;margin:0;padding:24px;font-size:12px;background:#fff;}
+  h1{font-size:19px;margin:0 0 4px;}
+  .meta{font-size:11.5px;color:#5B6480;margin-bottom:18px;line-height:1.7;}
+  h2{font-size:14px;margin:22px 0 8px;border-left:4px solid #2E5BFF;padding-left:8px;}
+  table{width:100%;border-collapse:collapse;margin-bottom:6px;}
+  th,td{border:1px solid #DDE2EE;padding:5px 8px;text-align:right;font-size:11.5px;}
+  th{background:#1B3FCC;color:#fff;font-weight:600;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  tfoot td{font-weight:700;background:#F2F4F9;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  tr{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  .foot-note{margin-top:20px;font-size:10.5px;color:#8D96B3;}
+  .print-btn{margin-bottom:14px;padding:9px 18px;font-family:'Sarabun','Tahoma',sans-serif;font-size:13.5px;font-weight:600;border-radius:5px;border:none;background:#AE4636;color:#fff;cursor:pointer;}
+  .print-btn:hover{background:#8F3A2D;}
+  @media print { .no-print{display:none;} }
+</style></head>
+<body>
+  <button class="no-print print-btn" onclick="window.print()">🖨 พิมพ์ / บันทึกเป็น PDF</button>
+  <h1>${title}</h1>
+  <div class="meta">${metaHtml}</div>
+  ${bodyHtml}
+  <div class="foot-note">${footNote}</div>
+</body></html>`;
+}
 
+/* ---------- Summary table: PDF + Excel (own data only) ---------- */
+function buildSummaryReportHTML(rows){
+  const groups = buildGroupedSummary(rows);
+  const allOffices = groups.flatMap(g=>g.offices);
+  const t_total = sumBy(allOffices,'units_total');
+  const t_trans = sumBy(allOffices,'units_transferred');
+  const t_vac = sumBy(allOffices,'vacant_total');
+
+  const summaryRowsHtml = groups.map(g=>{
+    const t = g.totals;
+    const groupRow = `<tr style="background:${g.style.bg};">
+      <td style="text-align:left;font-weight:700;color:${g.style.text};">กอง ${escapeHtml(g.div)} (${g.offices.length} สำนักงาน)</td>
+      <td>${t.proj_count.toLocaleString('th-TH')}</td>
+      <td>${fmt(t.building_count)}</td>
+      <td>${fmt(t.units_total)}</td>
+      <td>${fmt(t.units_transferred)}</td>
+      <td>${fmt(t.vacant_total)}</td>
+      <td>${pct(t.pct_transferred)}%</td>
+    </tr>`;
+    const officeRows = g.offices.map(r=>`<tr>
+      <td style="text-align:left;padding-left:22px;">${escapeHtml(r.office_name)}</td>
+      <td>${r.proj_count.toLocaleString('th-TH')}</td>
+      <td>${fmt(r.building_count)}</td>
+      <td>${fmt(r.units_total)}</td>
+      <td>${fmt(r.units_transferred)}</td>
+      <td>${fmt(r.vacant_total)}</td>
+      <td>${pct(r.pct_transferred)}%</td>
+    </tr>`).join('');
+    return groupRow + officeRows;
+  }).join('');
+
+  const dateStr = new Date().toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'});
+  const meta = `วันที่ออกรายงาน: ${dateStr}<br>ตัวกรองที่ใช้: ${escapeHtml(currentFilterText())}<br>สำนักงานในรายงาน: ${allOffices.length.toLocaleString('th-TH')} สำนักงาน ใน ${groups.length} กอง`;
+  const body = `<h2>ตารางสรุปรายกอง / สำนักงาน</h2>
+  <table>
+    <thead><tr>
+      <th style="text-align:left;">กอง / สำนักงาน</th><th>โครงการ</th><th>อาคาร</th><th>หน่วยเต็ม</th><th>โอนแล้ว</th><th>ว่าง</th><th>%โอนแล้ว</th>
+    </tr></thead>
+    <tbody>${summaryRowsHtml}</tbody>
+    <tfoot><tr>
+      <td style="text-align:left;">รวมทั้งหมดทุกกอง</td>
+      <td>${sumBy(allOffices,'proj_count').toLocaleString('th-TH')}</td>
+      <td>${fmt(sumBy(allOffices,'building_count'))}</td>
+      <td>${fmt(t_total)}</td>
+      <td>${fmt(t_trans)}</td>
+      <td>${fmt(t_vac)}</td>
+      <td>${t_total>0? pct(t_trans/t_total*100):'0.0'}%</td>
+    </tr></tfoot>
+  </table>`;
+  return reportShell('รายงานตารางสรุปรายกอง / สำนักงาน — การเคหะแห่งชาติ', meta, body,
+    'รายงานสร้างจากแดชบอร์ดหน่วยความรับผิดชอบ กคช. — คลิกปุ่ม “พิมพ์ / บันทึกเป็น PDF” ด้านบนเพื่อบันทึกไฟล์');
+}
+
+document.getElementById('btnSummaryPdf').addEventListener('click', ()=>{
+  openReportTab(buildSummaryReportHTML(getFiltered()));
+});
+
+document.getElementById('btnSummaryExcel').addEventListener('click', ()=>{
   const summarySheetData = (window._currentSummary||[]).map(r=>({
-    'สำนักงาน': r.office_name, 'กอง': r.div, 'จำนวนโครงการ': r.proj_count,
+    'กอง': r.div, 'สำนักงาน': r.office_name, 'จำนวนโครงการ': r.proj_count,
     'จำนวนอาคาร': r.building_count, 'หน่วยเต็ม': r.units_total,
     'โอนกรรมสิทธิ์แล้ว': r.units_transferred, 'หน่วยว่าง': r.vacant_total,
     '% โอนแล้ว': Math.round(r.pct_transferred*10)/10
   }));
-  const ws1 = XLSX.utils.json_to_sheet(summarySheetData);
-  XLSX.utils.book_append_sheet(wb, ws1, 'สรุปรายสำนักงาน');
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.json_to_sheet(summarySheetData);
+  XLSX.utils.book_append_sheet(wb, ws, 'สรุปรายสำนักงาน');
+  const dateStr = new Date().toISOString().slice(0,10);
+  XLSX.writeFile(wb, `ตารางสรุปรายกอง-สำนักงาน_${dateStr}.xlsx`);
+});
 
+/* ---------- Detail table: PDF + Excel (own data only) ---------- */
+function buildDetailReportHTML(rows){
+  let detail = [...rows];
+  const {key,dir} = sortState.detail;
+  detail.sort((a,b)=>{
+    let av=a[key], bv=b[key];
+    if(typeof av==='string') return av.localeCompare(bv,'th')*dir;
+    return (av-bv)*dir;
+  });
+
+  const detailRowsHtml = detail.map(r=>`<tr>
+      <td style="text-align:left;">${r.no}</td>
+      <td>${escapeHtml(r.div)}</td>
+      <td style="text-align:left;">${escapeHtml(r.office_name)}</td>
+      <td style="text-align:left;">${escapeHtml(r.proj_code)}</td>
+      <td style="text-align:left;">${escapeHtml(r.proj_name)}</td>
+      <td>${escapeHtml(r.province)}</td>
+      <td>${escapeHtml(r.proj_type)}</td>
+      <td>${escapeHtml(r.building_char)}</td>
+      <td>${fmt(r.units_total)}</td>
+      <td>${fmt(r.units_transferred)}</td>
+      <td>${fmt(r.vacant_total)}</td>
+    </tr>`).join('');
+
+  const dateStr = new Date().toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'});
+  const meta = `วันที่ออกรายงาน: ${dateStr}<br>ตัวกรองที่ใช้: ${escapeHtml(currentFilterText())}<br>จำนวนโครงการในรายงาน: ${detail.length.toLocaleString('th-TH')} โครงการ`;
+  const body = `<h2>ตารางรายละเอียดโครงการ (${detail.length.toLocaleString('th-TH')} โครงการ)</h2>
+  <table>
+    <thead><tr>
+      <th style="text-align:left;">ลำดับ</th><th>กอง</th><th style="text-align:left;">สำนักงาน</th><th style="text-align:left;">รหัส</th><th style="text-align:left;">ชื่อโครงการ</th><th>จังหวัด</th><th>ประเภท</th><th>ลักษณะอาคาร</th><th>หน่วยเต็ม</th><th>โอนแล้ว</th><th>ว่าง</th>
+    </tr></thead>
+    <tbody>${detailRowsHtml}</tbody>
+  </table>`;
+  return reportShell('รายงานตารางรายละเอียดโครงการ — การเคหะแห่งชาติ', meta, body,
+    'รายงานสร้างจากแดชบอร์ดหน่วยความรับผิดชอบ กคช. — คลิกปุ่ม “พิมพ์ / บันทึกเป็น PDF” ด้านบนเพื่อบันทึกไฟล์');
+}
+
+document.getElementById('btnDetailPdf').addEventListener('click', ()=>{
+  openReportTab(buildDetailReportHTML(getFiltered()));
+});
+
+document.getElementById('btnDetailExcel').addEventListener('click', ()=>{
   const detailSheetData = (window._currentDetail||[]).map(r=>({
     'ลำดับ': r.no, 'ฝ่าย': r.dept, 'กอง': r.div, 'รหัสสำนักงาน': r.office_code, 'สำนักงาน': r.office_name,
     'รหัสโครงการ': r.proj_code, 'ชื่อโครงการ': r.proj_name, 'ที่อยู่': r.address,
@@ -860,16 +1032,11 @@ document.getElementById('btnExportExcel').addEventListener('click', ()=>{
     'ว่างพร้อมขาย(ขาย)': r.vacant_ready_sale, 'ว่างไม่พร้อมขาย(ขาย)': r.vacant_notready_sale,
     'หน่วยว่างรวม': r.vacant_total
   }));
-  const ws2 = XLSX.utils.json_to_sheet(detailSheetData);
-  XLSX.utils.book_append_sheet(wb, ws2, 'รายละเอียดโครงการ');
-
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.json_to_sheet(detailSheetData);
+  XLSX.utils.book_append_sheet(wb, ws, 'รายละเอียดโครงการ');
   const dateStr = new Date().toISOString().slice(0,10);
-  XLSX.writeFile(wb, `แดชบอร์ดหน่วยความรับผิดชอบ_${dateStr}.xlsx`);
-});
-
-/* ---------- Export PDF ---------- */
-document.getElementById('btnExportPdf').addEventListener('click', ()=>{
-  window.print();
+  XLSX.writeFile(wb, `ตารางรายละเอียดโครงการ_${dateStr}.xlsx`);
 });
 
 /* ---------- Init ---------- */
