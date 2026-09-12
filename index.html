@@ -749,6 +749,14 @@
         <select id="wBuilding" class="f-select"><option value="">ทั้งหมด</option></select>
       </div>
       <div class="filter-group">
+        <label for="wRedate">การซื้อคืน</label>
+        <select id="wRedate" class="f-select"><option value="">ทั้งหมด</option></select>
+      </div>
+      <div class="filter-group">
+        <label for="wRemark">หมายเหตุ</label>
+        <select id="wRemark" class="f-select"><option value="">ทั้งหมด</option></select>
+      </div>
+      <div class="filter-group">
         <label for="wSearch">ค้นหา</label>
         <input id="wSearch" class="f-search" type="text" placeholder="ชื่อโครงการ / รหัส / MAT / บ้านเลขที่">
       </div>
@@ -950,6 +958,8 @@ const FILTER_META = {
   fIncome:   {label:'รูปแบบการหารายได้',    color:'#B97D00'},
   fBuilding: {label:'ลักษณะอาคาร',          color:'#22C55E'},
   fProvince: {label:'จังหวัด',              color:'#FF5A5F'},
+  fRedate:   {label:'การซื้อคืน',           color:'#06B6D4'},
+  fRemark:   {label:'หมายเหตุ',             color:'#65A30D'},
   fSearch:   {label:'ค้นหา',                color:'#5B6480'}
 };
 let sortState = { summary:{key:'units_total',dir:-1}, detail:{key:'no',dir:1} };
@@ -2210,12 +2220,13 @@ const VACANT_STATUS_DEF = {
 const VACANT_STATUS_ORDER = ['ready_rent','notready_rent','ready_sale','notready_sale'];
 const VACANT_STATUS_COLOR = { ready_rent:'gold', ready_sale:'gold', notready_rent:'red', notready_sale:'red' };
 const VACANT_TYPE_NAME_BY_STATUS = { ready_rent:'เช่า', notready_rent:'เช่า', ready_sale:'เช่าซื้อ', notready_sale:'เช่าซื้อ' };
-const vacantFilterIds = ['wDiv','wOffice','wProjName','wType','wIncome','wBuilding'];
-const FILTER_FIELD_W = {wDiv:'div', wOffice:'office_name', wProjName:'proj_name', wType:'proj_type', wIncome:'type_name', wBuilding:'building_char'};
+const vacantFilterIds = ['wDiv','wOffice','wProjName','wType','wIncome','wBuilding','wRedate','wRemark'];
+const FILTER_FIELD_W = {wDiv:'div', wOffice:'office_name', wProjName:'proj_name', wType:'proj_type', wIncome:'type_name', wBuilding:'building_char', wRedate:'redate_status', wRemark:'stock_rmk_display'};
 const FILTER_META_W = {
   wDiv: FILTER_META.fDiv, wOffice: FILTER_META.fOffice, wProjName: FILTER_META.fProjName,
   wType: FILTER_META.fType, wIncome: FILTER_META.fIncome,
-  wBuilding: FILTER_META.fBuilding, wSearch: FILTER_META.fSearch
+  wBuilding: FILTER_META.fBuilding, wRedate: FILTER_META.fRedate, wRemark: FILTER_META.fRemark,
+  wSearch: FILTER_META.fSearch
 };
 
 let VACANT_UNITS = null;
@@ -2241,7 +2252,8 @@ async function buildVacantUnits(){
       proj_code: rec.p, mat: rec.m, house_no: rec.h, status: rec.t,
       type_name: VACANT_TYPE_NAME_BY_STATUS[rec.t],
       contract_status: rec.c, end_guarantee_date: rec.e, redate: rec.r,
-      datek: rec.k, stock_rmk: rec.s, ref_no: rec.f,
+      redate_status: rec.r ? 'ซื้อคืน' : 'ไม่ใช่ซื้อคืน',
+      datek: rec.k, stock_rmk: rec.s, stock_rmk_display: rec.s || 'ไม่มีหมายเหตุ', ref_no: rec.f,
       div: proj.div, office_name: proj.office_name, proj_type: proj.proj_type,
       building_char: proj.building_char, proj_name: proj.proj_name
     });
@@ -2260,6 +2272,8 @@ function getVacantBase(excludeId){
     if(excludeId!=='wType' && vals.wType && r.proj_type!==vals.wType) return false;
     if(excludeId!=='wIncome' && vals.wIncome && r.type_name!==vals.wIncome) return false;
     if(excludeId!=='wBuilding' && vals.wBuilding && r.building_char!==vals.wBuilding) return false;
+    if(excludeId!=='wRedate' && vals.wRedate && r.redate_status!==vals.wRedate) return false;
+    if(excludeId!=='wRemark' && vals.wRemark && r.stock_rmk_display!==vals.wRemark) return false;
     if(q){
       const hay = (r.proj_name+' '+r.proj_code+' '+r.mat+' '+r.house_no+' '+r.office_name).toLowerCase();
       if(!hay.includes(q)) return false;
