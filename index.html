@@ -346,6 +346,11 @@
     display:flex;align-items:center;justify-content:space-between;padding:12px 16px;gap:10px;flex-wrap:wrap;
     border-bottom:1px solid var(--line);
   }
+  .table-pager{
+    display:flex;align-items:center;justify-content:center;gap:14px;padding:12px 16px;
+    border-top:1px solid var(--line);font-size:13px;color:var(--slate);
+  }
+  .table-pager button:disabled{opacity:0.4;cursor:not-allowed;}
   .detail-row td{
     background:var(--paper);text-align:left;white-space:normal;cursor:default;
   }
@@ -671,6 +676,11 @@
             <thead><tr id="aDetailHeadRow"></tr></thead>
             <tbody id="aDetailBody"></tbody>
           </table>
+        </div>
+        <div class="table-pager no-print">
+          <button class="btn btn-ghost" id="aDetailPrev">← ก่อนหน้า</button>
+          <span id="aDetailPagerInfo"></span>
+          <button class="btn btn-ghost" id="aDetailNext">ถัดไป →</button>
         </div>
       </div>
     </section>
@@ -1246,7 +1256,7 @@ function renderDetail(rows){
 }
 
 /* ---------- Sorting ---------- */
-function attachSort(tableId, target){
+function attachSort(tableId, target, onSort){
   document.querySelectorAll('#'+tableId+' thead th').forEach(th=>{
     th.addEventListener('click',()=>{
       const key = th.getAttribute('data-key');
@@ -1254,7 +1264,7 @@ function attachSort(tableId, target){
       else { sortState[target] = {key, dir: th.getAttribute('data-type')==='num'? -1:1}; }
       document.querySelectorAll('#'+tableId+' thead th .arrow').forEach(a=>a.textContent='');
       th.querySelector('.arrow').textContent = sortState[target].dir===1 ? '▲':'▼';
-      refresh();
+      (onSort || refresh)();
     });
   });
 }
@@ -1520,6 +1530,9 @@ const FILTER_META_A = {
 };
 
 let ACTIVE_UNITS = null;
+let aDetailPage = 0;
+const A_DETAIL_PAGE_SIZE = 300;
+let aLastDetailRows = [];
 let activeTabInited = false;
 let aStatusFilter = null; // key จาก ACTIVE_STATUS_DEF หรือ null = ไม่กรอง
 let chActiveDonut;
@@ -1729,7 +1742,7 @@ function renderSummaryHeaderActive(){
 }
 function renderSummaryActive(rows){
   const cols = renderSummaryHeaderActive();
-  attachSort('aSummaryTable','summaryActive');
+  attachSort('aSummaryTable','summaryActive', refreshActive);
   const statusKeys = cols.map(c=>c[0]).filter(k=>ACTIVE_STATUS_ORDER.includes(k));
   const groups = buildGroupedSummaryActive(rows);
   const body = document.getElementById('aSummaryBody');
@@ -1809,16 +1822,26 @@ function renderDetailHeaderActive(){
   return cols;
 }
 function renderDetailActive(rows){
+  aLastDetailRows = rows;
   const cols = renderDetailHeaderActive();
-  attachSort('aDetailTable','detailActive');
+  attachSort('aDetailTable','detailActive', ()=>{ aDetailPage = 0; refreshActive(); });
   const {key,dir} = sortState.detailActive;
   const list = [...rows].sort((a,b)=>{
     const av = getActiveDetailCellValue(a,key), bv = getActiveDetailCellValue(b,key);
     if(typeof av==='string') return (av||'').localeCompare(bv||'','th')*dir;
     return ((av||0)-(bv||0))*dir;
   });
+  window._currentDetailActive = list; // เก็บรายการเต็ม (ไม่ตัดหน้า) ไว้ให้ export ใช้
+
+  /* แสดงผลบนหน้าจอทีละหน้า (ไม่เรนเดอร์ทั้งหมดพร้อมกัน) เพื่อกันเบราว์เซอร์ค้างเมื่อมีหลายหมื่นแถว */
+  const totalPages = Math.max(1, Math.ceil(list.length / A_DETAIL_PAGE_SIZE));
+  if(aDetailPage >= totalPages) aDetailPage = totalPages - 1;
+  if(aDetailPage < 0) aDetailPage = 0;
+  const startIdx = aDetailPage * A_DETAIL_PAGE_SIZE;
+  const pageRows = list.slice(startIdx, startIdx + A_DETAIL_PAGE_SIZE);
+
   const body = document.getElementById('aDetailBody');
-  body.innerHTML = list.map(r=>{
+  body.innerHTML = pageRows.map(r=>{
     const cells = cols.map(([key,label,type,left])=>{
       const v = getActiveDetailCellValue(r, key);
       const display = (v===''||v===undefined||v===null) ? '—' : escapeHtml(String(v));
@@ -1826,8 +1849,16 @@ function renderDetailActive(rows){
     }).join('');
     return `<tr>${cells}</tr>`;
   }).join('');
-  window._currentDetailActive = list;
   document.getElementById('aDetailCount').innerHTML = `พบ <b>${list.length.toLocaleString('th-TH')}</b> หน่วย`;
+
+  const showFrom = list.length ? startIdx+1 : 0;
+  const showTo = Math.min(startIdx+A_DETAIL_PAGE_SIZE, list.length);
+  const pagerInfo = document.getElementById('aDetailPagerInfo');
+  if(pagerInfo) pagerInfo.textContent = `แสดง ${showFrom.toLocaleString('th-TH')}–${showTo.toLocaleString('th-TH')} จาก ${list.length.toLocaleString('th-TH')} หน่วย (หน้า ${aDetailPage+1}/${totalPages})`;
+  const prevBtn = document.getElementById('aDetailPrev');
+  const nextBtn = document.getElementById('aDetailNext');
+  if(prevBtn) prevBtn.disabled = aDetailPage<=0;
+  if(nextBtn) nextBtn.disabled = aDetailPage>=totalPages-1;
 }
 
 /* ---------- Export: PDF + Excel ---------- */
@@ -1930,6 +1961,7 @@ function refreshActive(){
   renderChipsActive();
   updateKpiActive(base);
   const rows = aStatusFilter ? base.filter(r=>r.status===aStatusFilter) : base;
+  aDetailPage = 0; // ตัวกรอง/สถานะเปลี่ยน = กลับไปหน้าแรกของตารางรายละเอียดเสมอ
   updateChartsActive(rows);
   renderSummaryActive(rows);
   renderDetailActive(rows);
@@ -1951,6 +1983,12 @@ function initActiveTab(){
     document.getElementById('aSearch').value = '';
     aStatusFilter = null;
     refreshActive();
+  });
+  document.getElementById('aDetailPrev').addEventListener('click', ()=>{
+    if(aDetailPage>0){ aDetailPage--; renderDetailActive(aLastDetailRows); }
+  });
+  document.getElementById('aDetailNext').addEventListener('click', ()=>{
+    aDetailPage++; renderDetailActive(aLastDetailRows);
   });
   document.getElementById('aBtnSummaryPdf').addEventListener('click', ()=> openReportTab(buildSummaryReportHTMLActive(getActiveRows())));
   document.getElementById('aBtnSummaryExcel').addEventListener('click', exportSummaryExcelActive);
