@@ -329,6 +329,7 @@
   tbody td{padding:9px 12px;text-align:right;border-bottom:1px solid var(--line-soft);white-space:nowrap;}
   tbody tr:hover{background:var(--primary-tint);}
   tbody tr:last-child td{border-bottom:none;}
+  #wDetailTable td.wrap-col, #wDetailTable th.wrap-col{white-space:normal;word-break:break-word;max-width:220px;}
   .active-chip{
     display:inline-block;background:var(--teal-tint);color:var(--teal);
     font-weight:700;font-variant-numeric:tabular-nums;
@@ -1494,11 +1495,8 @@ function reportShell(title, metaHtml, bodyHtml, footNote){
   h1{font-size:19px;margin:0 0 4px;}
   .meta{font-size:11.5px;color:#5B6480;margin-bottom:18px;line-height:1.7;}
   h2{font-size:14px;margin:22px 0 8px;border-left:4px solid #2E5BFF;padding-left:8px;}
-  table{width:100%;border-collapse:collapse;margin-bottom:6px;table-layout:fixed;}
-  th,td{
-    border:1px solid #DDE2EE;padding:5px 8px;text-align:right;font-size:11.5px;
-    vertical-align:top;word-wrap:break-word;overflow-wrap:break-word;word-break:break-word;
-  }
+  table{width:100%;border-collapse:collapse;margin-bottom:6px;}
+  th,td{border:1px solid #DDE2EE;padding:5px 8px;text-align:right;font-size:11.5px;vertical-align:top;}
   th{background:#EEF1F8;color:#28304D;font-weight:700;border-bottom:2px solid #C7D1E8;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
   tfoot td{font-weight:700;background:#F2F4F9;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
   tr{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
@@ -2458,9 +2456,10 @@ function getVacantDetailCellValue(r, key){
 }
 function renderDetailHeaderVacant(){
   const cols = getVacantDetailColumns();
-  document.getElementById('wDetailHeadRow').innerHTML = cols.map(([key,label,type,left])=>
-    `<th${left?' class="text-left"':''} data-key="${key}" data-type="${type}">${escapeHtml(label)}<span class="arrow"></span></th>`
-  ).join('');
+  document.getElementById('wDetailHeadRow').innerHTML = cols.map(([key,label,type,left])=>{
+    const cls = [left?'text-left':'', key==='ref_no'?'wrap-col':''].filter(Boolean).join(' ');
+    return `<th${cls?` class="${cls}"`:''} data-key="${key}" data-type="${type}">${escapeHtml(label)}<span class="arrow"></span></th>`;
+  }).join('');
   return cols;
 }
 function renderDetailVacant(rows){
@@ -2486,7 +2485,8 @@ function renderDetailVacant(rows){
     const cells = cols.map(([key,label,type,left])=>{
       const v = getVacantDetailCellValue(r, key);
       const display = (v===''||v===undefined||v===null) ? '—' : escapeHtml(String(v));
-      return `<td${left?' class="text-left"':''}>${display}</td>`;
+      const cls = [left?'text-left':'', key==='ref_no'?'wrap-col':''].filter(Boolean).join(' ');
+      return `<td${cls?` class="${cls}"`:''}>${display}</td>`;
     }).join('');
     return `<tr>${cells}</tr>`;
   }).join('');
@@ -2552,12 +2552,18 @@ function buildDetailReportHTMLVacant(rows){
     if(typeof av==='string') return (av||'').localeCompare(bv||'','th')*dir;
     return ((av||0)-(bv||0))*dir;
   });
-  const theadHtml = cols.map(([k,label,type,left])=>`<th${left?' style="text-align:left;"':''}>${escapeHtml(label)}</th>`).join('');
+  const cellStyle = ([k,label,type,left])=>{
+    const parts = [];
+    if(left) parts.push('text-align:left;');
+    if(k==='ref_no') parts.push('white-space:normal;word-break:break-word;max-width:160px;');
+    return parts.length ? ` style="${parts.join('')}"` : '';
+  };
+  const theadHtml = cols.map(c=>`<th${cellStyle(c)}>${escapeHtml(c[1])}</th>`).join('');
   const rowsHtml = list.map(r=>{
-    const tds = cols.map(([k,label,type,left])=>{
-      const v = getVacantDetailCellValue(r,k);
+    const tds = cols.map(c=>{
+      const v = getVacantDetailCellValue(r,c[0]);
       const display = (v===''||v===undefined||v===null)?'—':escapeHtml(String(v));
-      return `<td${left?' style="text-align:left;"':''}>${display}</td>`;
+      return `<td${cellStyle(c)}>${display}</td>`;
     }).join('');
     return `<tr>${tds}</tr>`;
   }).join('');
