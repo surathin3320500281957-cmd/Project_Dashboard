@@ -1885,16 +1885,15 @@ function updateChartsActive(rows){
 function getActiveSummaryColumns(){
   const cols = [
     ['office_name','กอง / สำนักงาน','str',true],
-    ['proj_count','จำนวนโครงการ','num',false],
+    ['proj_name','ชื่อโครงการ','str',true],
     ['total','รวม Active','num',false]
   ];
   const statusList = aStatusFilter ? [aStatusFilter] : ACTIVE_STATUS_ORDER;
   statusList.forEach(k=> cols.push([k, ACTIVE_STATUS_DEF[k].label, 'num', false]));
   return cols;
 }
-function officeAggActive(sub, office_name, div){
-  const proj_count = new Set(sub.map(r=>r.proj_code)).size;
-  const rec = { office_name, div, proj_count, total: sub.length };
+function projAggActive(sub, proj_name, office_name, div){
+  const rec = { proj_name, office_name, div, total: sub.length };
   ACTIVE_STATUS_ORDER.forEach(k=> rec[k] = sub.filter(r=>r.status===k).length);
   return rec;
 }
@@ -1903,15 +1902,19 @@ function buildGroupedSummaryActive(rows){
   const {key,dir} = sortState.summaryActive;
   return divs.map((d,i)=>{
     const groupRows = rows.filter(r=>r.div===d);
-    const officeNames = uniqueSorted(groupRows.map(r=>r.office_name));
-    const offices = officeNames.map(off=> officeAggActive(groupRows.filter(r=>r.office_name===off), off, d));
-    offices.sort((a,b)=>{
+    const projMap = {};
+    groupRows.forEach(r=>{
+      if(!projMap[r.proj_code]) projMap[r.proj_code] = { proj_name:r.proj_name, office_name:r.office_name, rows:[] };
+      projMap[r.proj_code].rows.push(r);
+    });
+    const projects = Object.values(projMap).map(p=> projAggActive(p.rows, p.proj_name, p.office_name, d));
+    projects.sort((a,b)=>{
       let av=a[key], bv=b[key];
       if(typeof av==='string') return av.localeCompare(bv,'th')*dir;
       return (av-bv)*dir;
     });
-    const totals = officeAggActive(groupRows, d, d);
-    return { div:d, style: GROUP_STYLES[i % GROUP_STYLES.length], offices, totals };
+    const totals = projAggActive(groupRows, '', '', d);
+    return { div:d, style: GROUP_STYLES[i % GROUP_STYLES.length], projects, totals };
   });
 }
 function renderSummaryHeaderActive(){
@@ -1930,35 +1933,34 @@ function renderSummaryActive(rows){
   body.innerHTML = groups.map(g=>{
     const t = g.totals;
     const groupCells = [
-      `<td>กอง ${g.div} <span style="font-weight:400;opacity:.75;">(${g.offices.length} สำนักงาน)</span></td>`,
-      `<td class="tabular">${t.proj_count.toLocaleString('th-TH')}</td>`,
+      `<td>กอง ${g.div} <span style="font-weight:400;opacity:.75;">(${g.projects.length} โครงการ)</span></td>`,
+      `<td class="text-left"></td>`,
       `<td class="tabular"><span class="active-chip">${fmt(t.total)}</span></td>`,
       ...statusKeys.map(k=>`<td class="tabular">${fmt(t[k])}</td>`)
     ].join('');
-    const officeHtml = g.offices.map(o=>{
+    const projHtml = g.projects.map(p=>{
       const cells = [
-        `<td class="text-left">${escapeHtml(o.office_name)}</td>`,
-        `<td class="tabular">${o.proj_count.toLocaleString('th-TH')}</td>`,
-        `<td class="tabular"><span class="active-chip">${fmt(o.total)}</span></td>`,
-        ...statusKeys.map(k=>`<td class="tabular">${fmt(o[k])}</td>`)
+        `<td class="text-left">${escapeHtml(p.office_name)}</td>`,
+        `<td class="text-left">${escapeHtml(p.proj_name)}</td>`,
+        `<td class="tabular"><span class="active-chip">${fmt(p.total)}</span></td>`,
+        ...statusKeys.map(k=>`<td class="tabular">${fmt(p[k])}</td>`)
       ].join('');
       return `<tr class="office-row">${cells}</tr>`;
     }).join('');
-    return `<tr class="group-row" style="background:${g.style.bg};color:${g.style.text};border-left:4px solid ${g.style.border};">${groupCells}</tr>` + officeHtml;
+    return `<tr class="group-row" style="background:${g.style.bg};color:${g.style.text};border-left:4px solid ${g.style.border};">${groupCells}</tr>` + projHtml;
   }).join('');
 
-  const allOffices = groups.flatMap(g=>g.offices);
-  const totalProjCount = new Set(rows.map(r=>r.proj_code)).size;
+  const allProjects = groups.flatMap(g=>g.projects);
   document.getElementById('aSummaryFoot').innerHTML = [
     `<td>รวมทั้งหมดทุกกอง</td>`,
-    `<td class="tabular">${totalProjCount.toLocaleString('th-TH')}</td>`,
+    `<td class="text-left"></td>`,
     `<td class="tabular"><span class="active-chip">${fmt(rows.length)}</span></td>`,
     ...statusKeys.map(k=>`<td class="tabular">${fmt(rows.filter(r=>r.status===k).length)}</td>`)
   ].join('');
 
-  window._currentSummaryActive = allOffices;
+  window._currentSummaryActive = allProjects;
   window._currentGroupsActive = groups;
-  document.getElementById('aSummaryCount').innerHTML = `พบ <b>${allOffices.length.toLocaleString('th-TH')}</b> สำนักงาน ใน <b>${groups.length.toLocaleString('th-TH')}</b> กอง`;
+  document.getElementById('aSummaryCount').innerHTML = `พบ <b>${allProjects.length.toLocaleString('th-TH')}</b> โครงการ ใน <b>${groups.length.toLocaleString('th-TH')}</b> กอง`;
 }
 
 /* ---------- ตารางรายละเอียด (ระดับหน่วย/MAT) — คอลัมน์อ้างอิงโผล่/ซ่อนตามสถานะที่กรอง ---------- */
@@ -2047,36 +2049,35 @@ function buildSummaryReportHTMLActive(rows){
   const cols = getActiveSummaryColumns();
   const statusKeys = cols.map(c=>c[0]).filter(k=>ACTIVE_STATUS_ORDER.includes(k));
   const groups = buildGroupedSummaryActive(rows);
-  const allOffices = groups.flatMap(g=>g.offices);
-  const totalProjCount = new Set(rows.map(r=>r.proj_code)).size;
+  const allProjects = groups.flatMap(g=>g.projects);
 
   const theadHtml = cols.map(([k,label,type,left])=>`<th${left?' style="text-align:left;"':''}>${escapeHtml(label)}</th>`).join('');
   const bodyHtml = groups.map(g=>{
     const t = g.totals;
     const groupRow = `<tr style="background:${g.style.bg};">
-      <td style="text-align:left;font-weight:700;color:${g.style.text};">กอง ${escapeHtml(g.div)} (${g.offices.length} สำนักงาน)</td>
-      <td>${t.proj_count.toLocaleString('th-TH')}</td>
+      <td style="text-align:left;font-weight:700;color:${g.style.text};">กอง ${escapeHtml(g.div)} (${g.projects.length} โครงการ)</td>
+      <td style="text-align:left;"></td>
       <td>${fmt(t.total)}</td>
       ${statusKeys.map(k=>`<td>${fmt(t[k])}</td>`).join('')}
     </tr>`;
-    const officeRows = g.offices.map(o=>`<tr>
-      <td style="text-align:left;padding-left:22px;">${escapeHtml(o.office_name)}</td>
-      <td>${o.proj_count.toLocaleString('th-TH')}</td>
-      <td>${fmt(o.total)}</td>
-      ${statusKeys.map(k=>`<td>${fmt(o[k])}</td>`).join('')}
+    const projRows = g.projects.map(p=>`<tr>
+      <td style="text-align:left;padding-left:22px;">${escapeHtml(p.office_name)}</td>
+      <td style="text-align:left;">${escapeHtml(p.proj_name)}</td>
+      <td>${fmt(p.total)}</td>
+      ${statusKeys.map(k=>`<td>${fmt(p[k])}</td>`).join('')}
     </tr>`).join('');
-    return groupRow + officeRows;
+    return groupRow + projRows;
   }).join('');
 
   const dateStr = new Date().toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'});
-  const meta = `วันที่ออกรายงาน: ${dateStr}<br>ตัวกรองที่ใช้: ${escapeHtml(currentFilterTextActive())}<br>สำนักงานในรายงาน: ${allOffices.length.toLocaleString('th-TH')} สำนักงาน ใน ${groups.length} กอง`;
-  const body = `<h2>ตารางสรุปรายกอง / สำนักงาน — หน่วย Active</h2>
+  const meta = `วันที่ออกรายงาน: ${dateStr}<br>ตัวกรองที่ใช้: ${escapeHtml(currentFilterTextActive())}<br>โครงการในรายงาน: ${allProjects.length.toLocaleString('th-TH')} โครงการ ใน ${groups.length} กอง`;
+  const body = `<h2>ตารางสรุปรายกอง / โครงการ — หน่วย Active</h2>
   <table>
     <thead><tr>${theadHtml}</tr></thead>
     <tbody>${bodyHtml}</tbody>
     <tfoot><tr>
       <td style="text-align:left;">รวมทั้งหมดทุกกอง</td>
-      <td>${totalProjCount.toLocaleString('th-TH')}</td>
+      <td style="text-align:left;"></td>
       <td>${fmt(rows.length)}</td>
       ${statusKeys.map(k=>`<td>${fmt(rows.filter(r=>r.status===k).length)}</td>`).join('')}
     </tr></tfoot>
