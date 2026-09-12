@@ -1494,9 +1494,12 @@ function reportShell(title, metaHtml, bodyHtml, footNote){
   h1{font-size:19px;margin:0 0 4px;}
   .meta{font-size:11.5px;color:#5B6480;margin-bottom:18px;line-height:1.7;}
   h2{font-size:14px;margin:22px 0 8px;border-left:4px solid #2E5BFF;padding-left:8px;}
-  table{width:100%;border-collapse:collapse;margin-bottom:6px;}
-  th,td{border:1px solid #DDE2EE;padding:5px 8px;text-align:right;font-size:11.5px;}
-  th{background:#1B3FCC;color:#fff;font-weight:600;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  table{width:100%;border-collapse:collapse;margin-bottom:6px;table-layout:fixed;}
+  th,td{
+    border:1px solid #DDE2EE;padding:5px 8px;text-align:right;font-size:11.5px;
+    vertical-align:top;word-wrap:break-word;overflow-wrap:break-word;word-break:break-word;
+  }
+  th{background:#EEF1F8;color:#28304D;font-weight:700;border-bottom:2px solid #C7D1E8;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
   tfoot td{font-weight:700;background:#F2F4F9;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
   tr{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
   .foot-note{margin-top:20px;font-size:10.5px;color:#8D96B3;}
