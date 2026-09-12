@@ -329,7 +329,6 @@
   tbody td{padding:9px 12px;text-align:right;border-bottom:1px solid var(--line-soft);white-space:nowrap;}
   tbody tr:hover{background:var(--primary-tint);}
   tbody tr:last-child td{border-bottom:none;}
-  #wDetailTable td.wrap-col, #wDetailTable th.wrap-col{white-space:normal;word-break:break-word;max-width:220px;}
   .active-chip{
     display:inline-block;background:var(--teal-tint);color:var(--teal);
     font-weight:700;font-variant-numeric:tabular-nums;
@@ -454,6 +453,14 @@
     <div class="filter-group">
       <label for="fDiv">กอง</label>
       <select id="fDiv" class="f-select"><option value="">ทั้งหมด</option></select>
+    </div>
+    <div class="filter-group">
+      <label for="fOffice">สำนักงาน</label>
+      <select id="fOffice" class="f-select"><option value="">ทั้งหมด</option></select>
+    </div>
+    <div class="filter-group">
+      <label for="fProjName">ชื่อโครงการ</label>
+      <select id="fProjName" class="f-select"><option value="">ทั้งหมด</option></select>
     </div>
     <div class="filter-group">
       <label for="fType">ประเภทโครงการ</label>
@@ -593,6 +600,14 @@
         <select id="aDiv" class="f-select"><option value="">ทั้งหมด</option></select>
       </div>
       <div class="filter-group">
+        <label for="aOffice">สำนักงาน</label>
+        <select id="aOffice" class="f-select"><option value="">ทั้งหมด</option></select>
+      </div>
+      <div class="filter-group">
+        <label for="aProjName">ชื่อโครงการ</label>
+        <select id="aProjName" class="f-select"><option value="">ทั้งหมด</option></select>
+      </div>
+      <div class="filter-group">
         <label for="aType">ประเภทโครงการ</label>
         <select id="aType" class="f-select"><option value="">ทั้งหมด</option></select>
       </div>
@@ -712,6 +727,14 @@
       <div class="filter-group">
         <label for="wDiv">กอง</label>
         <select id="wDiv" class="f-select"><option value="">ทั้งหมด</option></select>
+      </div>
+      <div class="filter-group">
+        <label for="wOffice">สำนักงาน</label>
+        <select id="wOffice" class="f-select"><option value="">ทั้งหมด</option></select>
+      </div>
+      <div class="filter-group">
+        <label for="wProjName">ชื่อโครงการ</label>
+        <select id="wProjName" class="f-select"><option value="">ทั้งหมด</option></select>
       </div>
       <div class="filter-group">
         <label for="wType">ประเภทโครงการ</label>
@@ -910,9 +933,11 @@ function fillSelect(id, values){
 }
 
 /* ---------- Filtering ---------- */
-const filterIds = ['fDiv','fType','fGroup','fIncome','fBuilding','fProvince'];
+const filterIds = ['fDiv','fOffice','fProjName','fType','fGroup','fIncome','fBuilding','fProvince'];
 const FILTER_META = {
   fDiv:      {label:'กอง',                 color:'#2E5BFF'},
+  fOffice:   {label:'สำนักงาน',             color:'#EC4899'},
+  fProjName: {label:'ชื่อโครงการ',          color:'#6366F1'},
   fType:     {label:'ประเภทโครงการ',        color:'#7C4DFF'},
   fGroup:    {label:'กลุ่มโครงการ',         color:'#0EA5A0'},
   fIncome:   {label:'รูปแบบการหารายได้',    color:'#B97D00'},
@@ -922,7 +947,7 @@ const FILTER_META = {
 };
 let sortState = { summary:{key:'units_total',dir:-1}, detail:{key:'no',dir:1} };
 
-const FILTER_FIELD = {fDiv:'div', fType:'proj_type', fGroup:'proj_group', fIncome:'income_model', fBuilding:'building_char', fProvince:'province'};
+const FILTER_FIELD = {fDiv:'div', fOffice:'office_name', fProjName:'proj_name', fType:'proj_type', fGroup:'proj_group', fIncome:'income_model', fBuilding:'building_char', fProvince:'province'};
 
 /* excludeId: ถ้าระบุ จะไม่ใช้ค่าของตัวกรองนั้นเอง (สำหรับคำนวณตัวเลือกแบบ cross-filter ที่ไม่กรองตัวเอง) */
 function getFiltered(excludeId){
@@ -931,6 +956,8 @@ function getFiltered(excludeId){
   const q = document.getElementById('fSearch').value.trim().toLowerCase();
   let rows = RAW_DATA.filter(r=>{
     if(excludeId!=='fDiv' && vals.fDiv && r.div!==vals.fDiv) return false;
+    if(excludeId!=='fOffice' && vals.fOffice && r.office_name!==vals.fOffice) return false;
+    if(excludeId!=='fProjName' && vals.fProjName && r.proj_name!==vals.fProjName) return false;
     if(excludeId!=='fType' && vals.fType && r.proj_type!==vals.fType) return false;
     if(excludeId!=='fGroup' && vals.fGroup && r.proj_group!==vals.fGroup) return false;
     if(excludeId!=='fIncome' && vals.fIncome && r.income_model!==vals.fIncome) return false;
@@ -1664,10 +1691,11 @@ const ACTIVE_BUCKET_TO_KEY = {
   'จะซื้อจะขาย':'pending_sale', 'ติดค้ำประกันฯ':'guarantee', 'รอโอน':'pending_transfer'
 };
 const ACTIVE_SOURCE_LABEL = {C:'มีสัญญา', L:'เช่าเหมา', P:'เช่าซื้อรอโอน'};
-const activeFilterIds = ['aDiv','aType','aIncome','aBuilding'];
-const FILTER_FIELD_A = {aDiv:'div', aType:'proj_type', aIncome:'income_model', aBuilding:'building_char'};
+const activeFilterIds = ['aDiv','aOffice','aProjName','aType','aIncome','aBuilding'];
+const FILTER_FIELD_A = {aDiv:'div', aOffice:'office_name', aProjName:'proj_name', aType:'proj_type', aIncome:'income_model', aBuilding:'building_char'};
 const FILTER_META_A = {
-  aDiv: FILTER_META.fDiv, aType: FILTER_META.fType, aIncome: FILTER_META.fIncome,
+  aDiv: FILTER_META.fDiv, aOffice: FILTER_META.fOffice, aProjName: FILTER_META.fProjName,
+  aType: FILTER_META.fType, aIncome: FILTER_META.fIncome,
   aBuilding: FILTER_META.fBuilding, aSearch: FILTER_META.fSearch
 };
 
@@ -1711,6 +1739,8 @@ function getActiveBase(excludeId){
   const q = document.getElementById('aSearch').value.trim().toLowerCase();
   return ACTIVE_UNITS.filter(r=>{
     if(excludeId!=='aDiv' && vals.aDiv && r.div!==vals.aDiv) return false;
+    if(excludeId!=='aOffice' && vals.aOffice && r.office_name!==vals.aOffice) return false;
+    if(excludeId!=='aProjName' && vals.aProjName && r.proj_name!==vals.aProjName) return false;
     if(excludeId!=='aType' && vals.aType && r.proj_type!==vals.aType) return false;
     if(excludeId!=='aIncome' && vals.aIncome && r.income_model!==vals.aIncome) return false;
     if(excludeId!=='aBuilding' && vals.aBuilding && r.building_char!==vals.aBuilding) return false;
@@ -2166,10 +2196,11 @@ const VACANT_STATUS_DEF = {
 const VACANT_STATUS_ORDER = ['ready_rent','notready_rent','ready_sale','notready_sale'];
 const VACANT_STATUS_COLOR = { ready_rent:'gold', ready_sale:'gold', notready_rent:'red', notready_sale:'red' };
 const VACANT_TYPE_NAME_BY_STATUS = { ready_rent:'เช่า', notready_rent:'เช่า', ready_sale:'เช่าซื้อ', notready_sale:'เช่าซื้อ' };
-const vacantFilterIds = ['wDiv','wType','wIncome','wBuilding'];
-const FILTER_FIELD_W = {wDiv:'div', wType:'proj_type', wIncome:'type_name', wBuilding:'building_char'};
+const vacantFilterIds = ['wDiv','wOffice','wProjName','wType','wIncome','wBuilding'];
+const FILTER_FIELD_W = {wDiv:'div', wOffice:'office_name', wProjName:'proj_name', wType:'proj_type', wIncome:'type_name', wBuilding:'building_char'};
 const FILTER_META_W = {
-  wDiv: FILTER_META.fDiv, wType: FILTER_META.fType, wIncome: FILTER_META.fIncome,
+  wDiv: FILTER_META.fDiv, wOffice: FILTER_META.fOffice, wProjName: FILTER_META.fProjName,
+  wType: FILTER_META.fType, wIncome: FILTER_META.fIncome,
   wBuilding: FILTER_META.fBuilding, wSearch: FILTER_META.fSearch
 };
 
@@ -2210,6 +2241,8 @@ function getVacantBase(excludeId){
   const q = document.getElementById('wSearch').value.trim().toLowerCase();
   return VACANT_UNITS.filter(r=>{
     if(excludeId!=='wDiv' && vals.wDiv && r.div!==vals.wDiv) return false;
+    if(excludeId!=='wOffice' && vals.wOffice && r.office_name!==vals.wOffice) return false;
+    if(excludeId!=='wProjName' && vals.wProjName && r.proj_name!==vals.wProjName) return false;
     if(excludeId!=='wType' && vals.wType && r.proj_type!==vals.wType) return false;
     if(excludeId!=='wIncome' && vals.wIncome && r.type_name!==vals.wIncome) return false;
     if(excludeId!=='wBuilding' && vals.wBuilding && r.building_char!==vals.wBuilding) return false;
@@ -2353,16 +2386,15 @@ function updateChartsVacant(rows){
 function getVacantSummaryColumns(){
   const cols = [
     ['office_name','กอง / สำนักงาน','str',true],
-    ['proj_count','จำนวนโครงการ','num',false],
+    ['proj_name','ชื่อโครงการ','str',true],
     ['total','รวมหน่วยว่าง','num',false]
   ];
   const statusList = wStatusFilter ? [wStatusFilter] : VACANT_STATUS_ORDER;
   statusList.forEach(k=> cols.push([k, VACANT_STATUS_DEF[k].label, 'num', false]));
   return cols;
 }
-function officeAggVacant(sub, office_name, div){
-  const proj_count = new Set(sub.map(r=>r.proj_code)).size;
-  const rec = { office_name, div, proj_count, total: sub.length };
+function projAggVacant(sub, proj_name, office_name, div){
+  const rec = { proj_name, office_name, div, total: sub.length };
   VACANT_STATUS_ORDER.forEach(k=> rec[k] = sub.filter(r=>r.status===k).length);
   return rec;
 }
@@ -2371,15 +2403,19 @@ function buildGroupedSummaryVacant(rows){
   const {key,dir} = sortState.summaryVacant;
   return divs.map((d,i)=>{
     const groupRows = rows.filter(r=>r.div===d);
-    const officeNames = uniqueSorted(groupRows.map(r=>r.office_name));
-    const offices = officeNames.map(off=> officeAggVacant(groupRows.filter(r=>r.office_name===off), off, d));
-    offices.sort((a,b)=>{
+    const projMap = {};
+    groupRows.forEach(r=>{
+      if(!projMap[r.proj_code]) projMap[r.proj_code] = { proj_name:r.proj_name, office_name:r.office_name, rows:[] };
+      projMap[r.proj_code].rows.push(r);
+    });
+    const projects = Object.values(projMap).map(p=> projAggVacant(p.rows, p.proj_name, p.office_name, d));
+    projects.sort((a,b)=>{
       let av=a[key], bv=b[key];
       if(typeof av==='string') return av.localeCompare(bv,'th')*dir;
       return (av-bv)*dir;
     });
-    const totals = officeAggVacant(groupRows, d, d);
-    return { div:d, style: GROUP_STYLES[i % GROUP_STYLES.length], offices, totals };
+    const totals = projAggVacant(groupRows, '', '', d);
+    return { div:d, style: GROUP_STYLES[i % GROUP_STYLES.length], projects, totals };
   });
 }
 function renderSummaryHeaderVacant(){
@@ -2398,35 +2434,34 @@ function renderSummaryVacant(rows){
   body.innerHTML = groups.map(g=>{
     const t = g.totals;
     const groupCells = [
-      `<td>กอง ${g.div} <span style="font-weight:400;opacity:.75;">(${g.offices.length} สำนักงาน)</span></td>`,
-      `<td class="tabular">${t.proj_count.toLocaleString('th-TH')}</td>`,
+      `<td>กอง ${g.div} <span style="font-weight:400;opacity:.75;">(${g.projects.length} โครงการ)</span></td>`,
+      `<td class="text-left"></td>`,
       `<td class="tabular"><span class="active-chip" style="background:var(--gold-tint);color:#B97D00;">${fmt(t.total)}</span></td>`,
       ...statusKeys.map(k=>`<td class="tabular">${fmt(t[k])}</td>`)
     ].join('');
-    const officeHtml = g.offices.map(o=>{
+    const projHtml = g.projects.map(p=>{
       const cells = [
-        `<td class="text-left">${escapeHtml(o.office_name)}</td>`,
-        `<td class="tabular">${o.proj_count.toLocaleString('th-TH')}</td>`,
-        `<td class="tabular"><span class="active-chip" style="background:var(--gold-tint);color:#B97D00;">${fmt(o.total)}</span></td>`,
-        ...statusKeys.map(k=>`<td class="tabular">${fmt(o[k])}</td>`)
+        `<td class="text-left">${escapeHtml(p.office_name)}</td>`,
+        `<td class="text-left">${escapeHtml(p.proj_name)}</td>`,
+        `<td class="tabular"><span class="active-chip" style="background:var(--gold-tint);color:#B97D00;">${fmt(p.total)}</span></td>`,
+        ...statusKeys.map(k=>`<td class="tabular">${fmt(p[k])}</td>`)
       ].join('');
       return `<tr class="office-row">${cells}</tr>`;
     }).join('');
-    return `<tr class="group-row" style="background:${g.style.bg};color:${g.style.text};border-left:4px solid ${g.style.border};">${groupCells}</tr>` + officeHtml;
+    return `<tr class="group-row" style="background:${g.style.bg};color:${g.style.text};border-left:4px solid ${g.style.border};">${groupCells}</tr>` + projHtml;
   }).join('');
 
-  const allOffices = groups.flatMap(g=>g.offices);
-  const totalProjCount = new Set(rows.map(r=>r.proj_code)).size;
+  const allProjects = groups.flatMap(g=>g.projects);
   document.getElementById('wSummaryFoot').innerHTML = [
     `<td>รวมทั้งหมดทุกกอง</td>`,
-    `<td class="tabular">${totalProjCount.toLocaleString('th-TH')}</td>`,
+    `<td class="text-left"></td>`,
     `<td class="tabular"><span class="active-chip" style="background:var(--gold-tint);color:#B97D00;">${fmt(rows.length)}</span></td>`,
     ...statusKeys.map(k=>`<td class="tabular">${fmt(rows.filter(r=>r.status===k).length)}</td>`)
   ].join('');
 
-  window._currentSummaryVacant = allOffices;
+  window._currentSummaryVacant = allProjects;
   window._currentGroupsVacant = groups;
-  document.getElementById('wSummaryCount').innerHTML = `พบ <b>${allOffices.length.toLocaleString('th-TH')}</b> สำนักงาน ใน <b>${groups.length.toLocaleString('th-TH')}</b> กอง`;
+  document.getElementById('wSummaryCount').innerHTML = `พบ <b>${allProjects.length.toLocaleString('th-TH')}</b> โครงการ ใน <b>${groups.length.toLocaleString('th-TH')}</b> กอง`;
 }
 
 /* ---------- ตารางรายละเอียด (ระดับหน่วย/MAT) ---------- */
@@ -2456,10 +2491,9 @@ function getVacantDetailCellValue(r, key){
 }
 function renderDetailHeaderVacant(){
   const cols = getVacantDetailColumns();
-  document.getElementById('wDetailHeadRow').innerHTML = cols.map(([key,label,type,left])=>{
-    const cls = [left?'text-left':'', key==='ref_no'?'wrap-col':''].filter(Boolean).join(' ');
-    return `<th${cls?` class="${cls}"`:''} data-key="${key}" data-type="${type}">${escapeHtml(label)}<span class="arrow"></span></th>`;
-  }).join('');
+  document.getElementById('wDetailHeadRow').innerHTML = cols.map(([key,label,type,left])=>
+    `<th${left?' class="text-left"':''} data-key="${key}" data-type="${type}">${escapeHtml(label)}<span class="arrow"></span></th>`
+  ).join('');
   return cols;
 }
 function renderDetailVacant(rows){
@@ -2485,8 +2519,7 @@ function renderDetailVacant(rows){
     const cells = cols.map(([key,label,type,left])=>{
       const v = getVacantDetailCellValue(r, key);
       const display = (v===''||v===undefined||v===null) ? '—' : escapeHtml(String(v));
-      const cls = [left?'text-left':'', key==='ref_no'?'wrap-col':''].filter(Boolean).join(' ');
-      return `<td${cls?` class="${cls}"`:''}>${display}</td>`;
+      return `<td${left?' class="text-left"':''}>${display}</td>`;
     }).join('');
     return `<tr>${cells}</tr>`;
   }).join('');
@@ -2507,36 +2540,35 @@ function buildSummaryReportHTMLVacant(rows){
   const cols = getVacantSummaryColumns();
   const statusKeys = cols.map(c=>c[0]).filter(k=>VACANT_STATUS_ORDER.includes(k));
   const groups = buildGroupedSummaryVacant(rows);
-  const allOffices = groups.flatMap(g=>g.offices);
-  const totalProjCount = new Set(rows.map(r=>r.proj_code)).size;
+  const allProjects = groups.flatMap(g=>g.projects);
 
   const theadHtml = cols.map(([k,label,type,left])=>`<th${left?' style="text-align:left;"':''}>${escapeHtml(label)}</th>`).join('');
   const bodyHtml = groups.map(g=>{
     const t = g.totals;
     const groupRow = `<tr style="background:${g.style.bg};">
-      <td style="text-align:left;font-weight:700;color:${g.style.text};">กอง ${escapeHtml(g.div)} (${g.offices.length} สำนักงาน)</td>
-      <td>${t.proj_count.toLocaleString('th-TH')}</td>
+      <td style="text-align:left;font-weight:700;color:${g.style.text};">กอง ${escapeHtml(g.div)} (${g.projects.length} โครงการ)</td>
+      <td style="text-align:left;"></td>
       <td>${fmt(t.total)}</td>
       ${statusKeys.map(k=>`<td>${fmt(t[k])}</td>`).join('')}
     </tr>`;
-    const officeRows = g.offices.map(o=>`<tr>
-      <td style="text-align:left;padding-left:22px;">${escapeHtml(o.office_name)}</td>
-      <td>${o.proj_count.toLocaleString('th-TH')}</td>
-      <td>${fmt(o.total)}</td>
-      ${statusKeys.map(k=>`<td>${fmt(o[k])}</td>`).join('')}
+    const projRows = g.projects.map(p=>`<tr>
+      <td style="text-align:left;padding-left:22px;">${escapeHtml(p.office_name)}</td>
+      <td style="text-align:left;">${escapeHtml(p.proj_name)}</td>
+      <td>${fmt(p.total)}</td>
+      ${statusKeys.map(k=>`<td>${fmt(p[k])}</td>`).join('')}
     </tr>`).join('');
-    return groupRow + officeRows;
+    return groupRow + projRows;
   }).join('');
 
   const dateStr = new Date().toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'});
-  const meta = `วันที่ออกรายงาน: ${dateStr}<br>ตัวกรองที่ใช้: ${escapeHtml(currentFilterTextVacant())}<br>สำนักงานในรายงาน: ${allOffices.length.toLocaleString('th-TH')} สำนักงาน ใน ${groups.length} กอง`;
-  const body = `<h2>ตารางสรุปรายกอง / สำนักงาน — หน่วยว่าง</h2>
+  const meta = `วันที่ออกรายงาน: ${dateStr}<br>ตัวกรองที่ใช้: ${escapeHtml(currentFilterTextVacant())}<br>โครงการในรายงาน: ${allProjects.length.toLocaleString('th-TH')} โครงการ ใน ${groups.length} กอง`;
+  const body = `<h2>ตารางสรุปรายกอง / โครงการ — หน่วยว่าง</h2>
   <table>
     <thead><tr>${theadHtml}</tr></thead>
     <tbody>${bodyHtml}</tbody>
     <tfoot><tr>
       <td style="text-align:left;">รวมทั้งหมดทุกกอง</td>
-      <td>${totalProjCount.toLocaleString('th-TH')}</td>
+      <td style="text-align:left;"></td>
       <td>${fmt(rows.length)}</td>
       ${statusKeys.map(k=>`<td>${fmt(rows.filter(r=>r.status===k).length)}</td>`).join('')}
     </tr></tfoot>
@@ -2552,18 +2584,12 @@ function buildDetailReportHTMLVacant(rows){
     if(typeof av==='string') return (av||'').localeCompare(bv||'','th')*dir;
     return ((av||0)-(bv||0))*dir;
   });
-  const cellStyle = ([k,label,type,left])=>{
-    const parts = [];
-    if(left) parts.push('text-align:left;');
-    if(k==='ref_no') parts.push('white-space:normal;word-break:break-word;max-width:160px;');
-    return parts.length ? ` style="${parts.join('')}"` : '';
-  };
-  const theadHtml = cols.map(c=>`<th${cellStyle(c)}>${escapeHtml(c[1])}</th>`).join('');
+  const theadHtml = cols.map(([k,label,type,left])=>`<th${left?' style="text-align:left;"':''}>${escapeHtml(label)}</th>`).join('');
   const rowsHtml = list.map(r=>{
-    const tds = cols.map(c=>{
-      const v = getVacantDetailCellValue(r,c[0]);
+    const tds = cols.map(([k,label,type,left])=>{
+      const v = getVacantDetailCellValue(r,k);
       const display = (v===''||v===undefined||v===null)?'—':escapeHtml(String(v));
-      return `<td${cellStyle(c)}>${display}</td>`;
+      return `<td${left?' style="text-align:left;"':''}>${display}</td>`;
     }).join('');
     return `<tr>${tds}</tr>`;
   }).join('');
