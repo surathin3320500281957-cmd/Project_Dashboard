@@ -156,19 +156,16 @@
   .kpi.hero .kpi-value{color:#fff;}
   .kpi.hero .kpi-sub{color:#DCE2FF;}
   .kpi.active-hero{
-    grid-column:1/-1;
     background:linear-gradient(135deg,#0EA5A0,#0BC5BE);
     border-top:none;color:#fff;
     box-shadow:0 6px 18px rgba(14,165,160,0.28);
   }
+  .kpi.active-hero.selected{box-shadow:0 0 0 2.5px #063E3B, 0 6px 18px rgba(14,165,160,0.28);}
   .kpi.active-hero .kpi-label{color:#E3FFFC;}
-  .kpi.active-hero .kpi-value{color:#fff;font-size:40px;}
+  .kpi.active-hero .kpi-value{color:#fff;font-size:36px;}
   .kpi.active-hero .kpi-sub{color:#DFFFFB;}
-  .kpi.active-hero .kpi-breakdown{border-top-color:rgba(255,255,255,0.25);}
-  .kpi.active-hero .kpi-sub-badge{background:rgba(255,255,255,0.16);color:#fff;}
-  .kpi.active-hero .kpi-sub-badge:hover{background:rgba(255,255,255,0.28);}
-  .kpi.active-hero .kpi-sub-badge.active{background:#fff;color:#0B7A76;border-color:#fff;}
-  .active-kpi-grid{grid-template-columns:1fr;}
+  .active-kpi-grid{grid-template-columns:repeat(4,1fr);}
+  #aKpiGrid .kpi-label .tag{opacity:1;}
   /* ===== Tab switcher ===== */
   .tab-switcher{display:flex;gap:6px;padding:14px 24px 0;background:var(--paper);}
   .tab-btn{
@@ -368,11 +365,11 @@
   }
 
   @media (max-width:1150px){
-    .kpi-grid{grid-template-columns:repeat(2,1fr);}
+    .kpi-grid, .active-kpi-grid{grid-template-columns:repeat(2,1fr);}
     .chart-grid, .chart-grid.full{grid-template-columns:1fr;}
   }
   @media (max-width:640px){
-    .kpi-grid{grid-template-columns:repeat(2,1fr);}
+    .kpi-grid, .active-kpi-grid{grid-template-columns:repeat(2,1fr);}
     header.top{padding:16px 18px;}
     .filter-inner,main,footer.page-footer{padding-left:18px;padding-right:18px;}
   }
@@ -604,7 +601,7 @@
     <section id="aKpiSection">
       <div class="section-head">
         <h2 class="section-title"><span class="n"></span>หน่วย Active</h2>
-        <span class="section-sub">ข้อมูลระดับหน่วยจาก 3 ชีตธุรกรรม (มีสัญญา / เช่าเหมา / เช่าซื้อรอโอน) — คลิก badge สถานะเพื่อกรองตาราง/กราฟเฉพาะสถานะนั้น (คลิกซ้ำเพื่อยกเลิก)</span>
+        <span class="section-sub">ข้อมูลระดับหน่วยจาก 3 ชีตธุรกรรม (มีสัญญา / เช่าเหมา / เช่าซื้อรอโอน) — คลิกการ์ดสถานะเพื่อกรองตาราง/กราฟเฉพาะสถานะนั้น (คลิกซ้ำหรือคลิก "หน่วย Active ทั้งหมด" เพื่อยกเลิก)</span>
       </div>
       <div class="kpi-grid active-kpi-grid" id="aKpiGrid"></div>
     </section>
@@ -1642,24 +1639,32 @@ function renderChipsActive(){
 /* ---------- การ์ด KPI: หน่วย Active ทั้งหมด + 6 badge สถานะ (คลิกกรองได้) ---------- */
 function updateKpiActive(base){
   const total = base.length;
-  const bd = ACTIVE_STATUS_ORDER.map(k=>{
-    const count = base.filter(r=>r.status===k).length;
-    const isActive = aStatusFilter===k;
-    return `<li><button type="button" class="kpi-sub-badge${isActive?' active':''}" data-status="${k}">
-      <span class="lbl">${ACTIVE_STATUS_DEF[k].label}</span><span class="val">${fmt(count)}</span>
-    </button></li>`;
-  }).join('');
-  document.getElementById('aKpiGrid').innerHTML = `
-    <div class="kpi active-hero">
-      <div class="kpi-label">หน่วย Active ทั้งหมด <span class="tag">${aStatusFilter? 'กำลังกรอง: '+ACTIVE_STATUS_DEF[aStatusFilter].label+' ✕' : ''}</span></div>
+  const totalSelected = aStatusFilter===null;
+
+  const cards = [];
+  cards.push(`
+    <div class="kpi active-hero${totalSelected?' selected':''}" data-status="__all__">
+      <div class="kpi-label">หน่วย Active ทั้งหมด <span class="tag">${totalSelected?'แสดงทุกสถานะ':'คลิกเพื่อดูทุกสถานะ'}</span></div>
       <div class="kpi-value tabular">${fmt(total)}</div>
       <div class="kpi-sub">รวมจาก 3 แหล่งข้อมูล: มีสัญญา, เช่าเหมา, เช่าซื้อรอโอน</div>
-      <ul class="kpi-breakdown" style="grid-template-columns:repeat(3,1fr);">${bd}</ul>
-    </div>`;
-  document.querySelectorAll('#aKpiGrid .kpi-sub-badge').forEach(btn=>{
-    btn.addEventListener('click', ()=>{
-      const k = btn.getAttribute('data-status');
-      aStatusFilter = (aStatusFilter===k) ? null : k;
+    </div>`);
+  ACTIVE_STATUS_ORDER.forEach(k=>{
+    const count = base.filter(r=>r.status===k).length;
+    const isSel = aStatusFilter===k;
+    const percent = total>0 ? pct(count/total*100) : '0.0';
+    cards.push(`
+      <div class="kpi teal${isSel?' filtering':''}" data-status="${k}">
+        <div class="kpi-label">${ACTIVE_STATUS_DEF[k].label} <span class="tag">${isSel?'กำลังกรอง ✕':'คลิกเพื่อกรอง'}</span></div>
+        <div class="kpi-value tabular">${fmt(count)}</div>
+        <div class="kpi-sub"><b>${percent}%</b> ของหน่วย Active ทั้งหมด</div>
+      </div>`);
+  });
+  document.getElementById('aKpiGrid').innerHTML = cards.join('');
+  document.querySelectorAll('#aKpiGrid .kpi').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      const k = el.getAttribute('data-status');
+      if(k==='__all__'){ aStatusFilter = null; }
+      else { aStatusFilter = (aStatusFilter===k) ? null : k; }
       refreshActive();
     });
   });
