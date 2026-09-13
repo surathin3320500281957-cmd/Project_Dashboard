@@ -199,15 +199,18 @@
   .tab-page.hidden{display:none;}
   /* ===== Sub-tab switcher (ซ้อนอยู่ในหน้า "หน่วยว่าง") ===== */
   .sub-tab-switcher{
-    display:flex;gap:4px;padding:14px 24px 0;background:transparent;
+    display:flex;gap:8px;padding:16px 24px 16px;background:transparent;
   }
   .sub-tab-btn{
-    font-family:inherit;font-size:12.5px;font-weight:600;padding:7px 16px;
-    border:1px solid var(--line);border-bottom:none;border-radius:8px 8px 0 0;
-    background:var(--paper);color:var(--slate);cursor:pointer;transition:all .15s;
+    font-family:inherit;font-size:13px;font-weight:700;padding:9px 20px;
+    border:none;border-radius:10px;background:var(--surface);color:var(--slate);
+    cursor:pointer;transition:all .15s;box-shadow:0 1px 3px rgba(22,27,46,0.08);
   }
   .sub-tab-btn:hover{color:var(--ink);background:var(--primary-tint);}
-  .sub-tab-btn.active{color:var(--ink);background:var(--surface);border-color:var(--line);box-shadow:0 -1px 0 var(--surface) inset;}
+  .sub-tab-btn.active{
+    color:#fff;background:linear-gradient(135deg,#B97D00,#E0A028);
+    box-shadow:0 3px 10px rgba(185,125,0,0.38);
+  }
   .sub-tab-page.hidden{display:none;}
   .kpi.change-hero{
     background:linear-gradient(135deg,#6366F1,#818CF8);
