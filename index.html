@@ -931,7 +931,7 @@
     <section id="chKpiSection">
       <div class="section-head">
         <h2 class="section-title"><span class="n"></span>การเปลี่ยนแปลงหน่วยว่าง</h2>
-        <span class="section-sub">เทียบชีต "หน่วยว่างเดิม" (ก่อนอัปเดต) กับข้อมูลชุดใหม่ (หน่วยว่าง + หน่วย Active) จับคู่ด้วย MAT — คลิกการ์ดกลุ่มเพื่อกรอง (คลิกซ้ำหรือคลิก "ทั้งหมด" เพื่อยกเลิก)</span>
+        <span class="section-sub">เทียบชีต "หน่วยว่างเดิม" (ก่อนอัปเดต) กับข้อมูลชุดใหม่ (หน่วยว่าง + หน่วย Active) จับคู่ด้วย MAT — เฉพาะโครงการที่ยังอยู่ในชีต "สรุปหน่วยเต็ม" 185 โครงการปัจจุบันเท่านั้น (โครงการที่ไม่มีในไฟล์ปัจจุบันจะถูกตัดออก ไม่นำมาแสดง) — คลิกการ์ดกลุ่มเพื่อกรอง (คลิกซ้ำหรือคลิก "ทั้งหมด" เพื่อยกเลิก)</span>
       </div>
       <div class="kpi-grid change-kpi-grid" id="chKpiGrid"></div>
     </section>
@@ -2919,18 +2919,16 @@ sortState.detailChange = { key:'proj_code', dir:1 };
 function buildVacantChangeUnits(){
   const projIndex = {};
   RAW_DATA.forEach(r=> projIndex[r.proj_code]=r);
-  return VACANT_CHANGE_RAW.map(rec=>{
-    const proj = projIndex[rec.p];
-    return {
-      mat: rec.m, proj_code: rec.p, group: rec.g, old_status: rec.os, new_status: rec.ns || '',
-      proj_exists: !!proj,
-      div: proj ? proj.div : 'ไม่ทราบกอง',
-      office_name: proj ? proj.office_name : 'ไม่ทราบสำนักงาน',
-      proj_type: proj ? proj.proj_type : '',
-      building_char: proj ? proj.building_char : '',
-      proj_name: proj ? proj.proj_name : '(ไม่พบโครงการนี้ในไฟล์ปัจจุบัน)'
-    };
-  });
+  return VACANT_CHANGE_RAW
+    .filter(rec=> projIndex[rec.p]) // ตัดทิ้งถ้ารหัสโครงการไม่อยู่ใน 185 โครงการที่ล็อกไว้ (เหมือน tab อื่นทุก tab) — ไม่นำมาแสดงเลย
+    .map(rec=>{
+      const proj = projIndex[rec.p];
+      return {
+        mat: rec.m, proj_code: rec.p, group: rec.g, old_status: rec.os, new_status: rec.ns || '',
+        div: proj.div, office_name: proj.office_name, proj_type: proj.proj_type,
+        building_char: proj.building_char, proj_name: proj.proj_name
+      };
+    });
 }
 
 function getChangeBase(excludeId){
