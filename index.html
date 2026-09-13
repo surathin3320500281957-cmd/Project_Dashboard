@@ -164,6 +164,12 @@
   .kpi.active-hero .kpi-label{color:#E3FFFC;}
   .kpi.active-hero .kpi-value{color:#fff;font-size:36px;}
   .kpi.active-hero .kpi-sub{color:#DFFFFB;}
+  .kpi-proj-badge{
+    display:inline-block;margin-top:9px;padding:5px 13px;border-radius:999px;
+    font-size:13px;font-weight:800;background:#fff;letter-spacing:.01em;
+    box-shadow:0 2px 6px rgba(0,0,0,0.15);
+  }
+  .kpi.active-hero .kpi-proj-badge{color:#0B7A76;}
   .active-kpi-grid{grid-template-columns:repeat(4,1fr);}
   #aKpiGrid .kpi-label .tag{opacity:1;}
   .kpi.vacant-hero{
@@ -175,17 +181,21 @@
   .kpi.vacant-hero .kpi-label{color:#FFF3DC;}
   .kpi.vacant-hero .kpi-value{color:#fff;font-size:36px;}
   .kpi.vacant-hero .kpi-sub{color:#FFF3DC;}
+  .kpi.vacant-hero .kpi-proj-badge{color:#8A5A00;}
   .vacant-kpi-grid{grid-template-columns:repeat(4,1fr);}
   #wKpiGrid .kpi-label .tag{opacity:1;}
   /* ===== Tab switcher ===== */
-  .tab-switcher{display:flex;gap:6px;padding:14px 24px 0;background:var(--paper);}
+  .tab-switcher{display:flex;gap:10px;padding:16px 24px 18px;background:var(--paper);}
   .tab-btn{
-    font-family:inherit;font-size:14.5px;font-weight:700;padding:11px 22px;
-    border:none;border-radius:10px 10px 0 0;background:transparent;color:var(--slate);
-    cursor:pointer;border-bottom:3px solid transparent;transition:all .15s;
+    font-family:inherit;font-size:14.5px;font-weight:700;padding:12px 24px;
+    border:none;border-radius:12px;background:var(--surface);color:var(--slate);
+    cursor:pointer;transition:all .15s;box-shadow:0 1px 3px rgba(22,27,46,0.08);
   }
   .tab-btn:hover{color:var(--ink);background:var(--primary-tint);}
-  .tab-btn.active{color:var(--primary);border-bottom-color:var(--primary);background:var(--surface);}
+  .tab-btn.active{
+    color:#fff;background:linear-gradient(135deg,#2E5BFF,#1B3FCC);
+    box-shadow:0 4px 14px rgba(46,91,255,0.38);
+  }
   .tab-page.hidden{display:none;}
   /* ===== Sub-tab switcher (ซ้อนอยู่ในหน้า "หน่วยว่าง") ===== */
   .sub-tab-switcher{
@@ -2024,7 +2034,8 @@ function updateKpiActive(base){
     <div class="kpi active-hero${totalSelected?' selected':''}" data-status="__all__">
       <div class="kpi-label">หน่วย Active ทั้งหมด <span class="tag">${totalSelected?'แสดงทุกสถานะ':'คลิกเพื่อดูทุกสถานะ'}</span></div>
       <div class="kpi-value tabular">${fmt(total)}</div>
-      <div class="kpi-sub">รวมจาก 3 แหล่งข้อมูล: มีสัญญา, เช่าเหมา, เช่าซื้อรอโอน<br>พบใน <b>${fmt(projCount)}</b> โครงการ จาก ${fmt(totalProj)} โครงการทั้งหมด</div>
+      <div class="kpi-sub">รวมจาก 3 แหล่งข้อมูล: มีสัญญา, เช่าเหมา, เช่าซื้อรอโอน</div>
+      <div class="kpi-proj-badge">พบใน ${fmt(projCount)} โครงการ จาก ${fmt(totalProj)} โครงการทั้งหมด</div>
     </div>`);
   ACTIVE_STATUS_ORDER.forEach(k=>{
     const count = base.filter(r=>r.status===k).length;
@@ -2536,7 +2547,8 @@ function updateKpiVacant(base){
     <div class="kpi vacant-hero${totalSelected?' selected':''}" data-status="__all__">
       <div class="kpi-label">หน่วยว่างทั้งหมด <span class="tag">${totalSelected?'แสดงทุกสถานะ':'คลิกเพื่อดูทุกสถานะ'}</span></div>
       <div class="kpi-value tabular">${fmt(total)}</div>
-      <div class="kpi-sub">จากชีต "หน่วยว่าง"<br>พบใน <b>${fmt(projCount)}</b> โครงการ จาก ${fmt(totalProj)} โครงการทั้งหมด</div>
+      <div class="kpi-sub">จากชีต "หน่วยว่าง"</div>
+      <div class="kpi-proj-badge">พบใน ${fmt(projCount)} โครงการ จาก ${fmt(totalProj)} โครงการทั้งหมด</div>
     </div>`);
   VACANT_STATUS_ORDER.forEach(k=>{
     const count = base.filter(r=>r.status===k).length;
