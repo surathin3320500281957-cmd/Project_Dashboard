@@ -2953,18 +2953,36 @@ let chDonut;
 sortState.summaryChange = { key:'total', dir:-1 };
 sortState.detailChange = { key:'proj_code', dir:1 };
 
-function buildVacantChangeUnits(){
+async function buildVacantChangeUnits(){
   const projIndex = {};
   RAW_DATA.forEach(r=> projIndex[r.proj_code]=r);
+
+  /* ดึงคอลัมน์เพิ่มเติมจากชีต "หน่วยว่าง" ปัจจุบัน (VC64) มา join ด้วย MAT — ให้ผลเฉพาะ MAT ที่ยังปรากฏอยู่
+     ในหน่วยว่างตอนนี้จริง (กลุ่ม ยังว่างเหมือนเดิม/เปลี่ยนสถานะย่อย/ว่างใหม่) ส่วน MAT ที่เปลี่ยนเป็น Active
+     หรือหาไม่เจอ จะไม่มีข้อมูลนี้ (โชว์ "—") เพราะไม่ได้อยู่ในชีตหน่วยว่างแล้ว */
+  const vacantPayload = JSON.parse(await decompressGzipBase64(VC64));
+  const vacantExtraByMat = {};
+  vacantPayload.rows.forEach(arr=>{
+    const rec = {}; vacantPayload.cols.forEach((c,i)=> rec[c]=arr[i]);
+    vacantExtraByMat[rec.m] = {
+      contract_status: rec.c || '', end_guarantee_date: rec.e || '',
+      redate: rec.r || '', datek: rec.k || 0, stock_rmk: rec.s || '', ref_no: rec.f || ''
+    };
+  });
+  const emptyExtra = { contract_status:'', end_guarantee_date:'', redate:'', datek:'', stock_rmk:'', ref_no:'' };
+
   return VACANT_CHANGE_RAW
     .filter(rec=> projIndex[rec.p]) // ตัดทิ้งถ้ารหัสโครงการไม่อยู่ใน 185 โครงการที่ล็อกไว้ (เหมือน tab อื่นทุก tab) — ไม่นำมาแสดงเลย
     .map(rec=>{
       const proj = projIndex[rec.p];
+      const extra = vacantExtraByMat[rec.m] || emptyExtra;
       return {
         mat: rec.m, proj_code: rec.p, group: rec.g, old_status: rec.os, new_status: rec.ns || '',
         old_status_label: rec.os ? (ALL_STATUS_LABEL[rec.os] || rec.os) : '',
         div: proj.div, office_name: proj.office_name, proj_type: proj.proj_type,
-        building_char: proj.building_char, proj_name: proj.proj_name
+        building_char: proj.building_char, proj_name: proj.proj_name,
+        contract_status: extra.contract_status, end_guarantee_date: extra.end_guarantee_date,
+        redate: extra.redate, datek: extra.datek, stock_rmk: extra.stock_rmk, ref_no: extra.ref_no
       };
     });
 }
@@ -3214,7 +3232,13 @@ function getChangeDetailColumns(){
     ['mat','MAT','str',true],
     ['group_label','กลุ่มการเปลี่ยนแปลง','str',false],
     ['old_status_label','สถานะเดิม (ว่าง)','str',false],
-    ['new_status_label','สถานะใหม่','str',false]
+    ['new_status_label','สถานะใหม่','str',false],
+    ['contract_status','CONTRACT_STATUS','str',false],
+    ['end_guarantee_date','สิ้นสุดค้ำประกัน','str',false],
+    ['redate','วันที่ซื้อคืน','str',false],
+    ['datek','จำนวนวันซื้อคืน','num',false],
+    ['stock_rmk','หมายเหตุ','str',false],
+    ['ref_no','อ้างถึง','str',false]
   ];
 }
 function getChangeDetailCellValue(r, key){
@@ -3377,10 +3401,10 @@ function refreshChange(){
   document.getElementById('chResultCount').innerHTML = `พบ <b>${rows.length.toLocaleString('th-TH')}</b> หน่วย จากทั้งหมด ${VACANT_CHANGE_UNITS.length.toLocaleString('th-TH')}`;
 }
 
-function initVacantChangeTab(){
+async function initVacantChangeTab(){
   if(vacantChangeTabInited) return;
   vacantChangeTabInited = true;
-  VACANT_CHANGE_UNITS = buildVacantChangeUnits();
+  VACANT_CHANGE_UNITS = await buildVacantChangeUnits();
   initChangeCharts();
   changeFilterIds.forEach(id=> document.getElementById(id).addEventListener('change', refreshChange));
   document.getElementById('chSearch').addEventListener('input', ()=>{
