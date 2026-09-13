@@ -155,6 +155,7 @@
   .kpi.hero .kpi-label{color:#E4E9FF;}
   .kpi.hero .kpi-value{color:#fff;}
   .kpi.hero .kpi-sub{color:#DCE2FF;}
+  .kpi.hero .kpi-proj-badge{color:#3B2FA8;}
   .kpi.active-hero{
     background:linear-gradient(135deg,#0EA5A0,#0BC5BE);
     border-top:none;color:#fff;
@@ -1379,7 +1380,9 @@ function updateKpis(rows){
 
   const cards = [
     {metric:'total', cls:'hero', label:'หน่วยเต็ม', value:fmt(total),
-      sub:`${projects.toLocaleString('th-TH')} โครงการ / ${offices.toLocaleString('th-TH')} สำนักงาน`, breakdown:''},
+      sub:`${offices.toLocaleString('th-TH')} สำนักงาน`,
+      projBadge:`พบใน ${projects.toLocaleString('th-TH')} โครงการ จาก ${RAW_DATA.length.toLocaleString('th-TH')} โครงการทั้งหมด`,
+      breakdown:''},
     {metric:'active', cls:'teal', label:'หน่วย Active', value:fmt(active),
       sub:`<b>${pct(activePct)}%</b> ของหน่วยเต็ม`,
       breakdown: bd(['rent','lease_whole','hire_purchase','pending_sale','guarantee','pending_transfer'])},
@@ -1402,6 +1405,7 @@ function updateKpis(rows){
       <div class="kpi-label">${c.label} <span class="tag">${tagText}</span></div>
       <div class="kpi-value tabular">${c.value}</div>
       <div class="kpi-sub">${c.sub}</div>
+      ${c.projBadge ? `<div class="kpi-proj-badge">${c.projBadge}</div>` : ''}
       ${c.breakdown}
     </div>
   `;
