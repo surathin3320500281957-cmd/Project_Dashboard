@@ -1697,6 +1697,8 @@ document.getElementById('fSearch').addEventListener('input', ()=>{
 document.getElementById('btnReset').addEventListener('click', ()=>{
   filterIds.forEach(id=> document.getElementById(id).value = '');
   document.getElementById('fSearch').value='';
+  selectedMetric = 'total'; // รีเซ็ต metric ที่เลือกจากการคลิกการ์ด/badge กลับเป็นค่าเริ่มต้น
+  kpiFilterOn = false;      // ไม่งั้นกราฟ+การไฮไลต์การ์ดจะยังค้างอยู่ที่ตัวกรองเดิม
   refresh();
 });
 
