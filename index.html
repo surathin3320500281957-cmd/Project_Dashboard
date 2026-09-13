@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>แดชบอร์ดหน่วยความรับผิดชอบ | การเคหะแห่งชาติ</title>
+<title>แดชบอร์ดหน่วยความรับผิดชอบ</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
@@ -468,7 +468,7 @@
 <header class="top">
   <div class="top-inner">
     <div>
-      <p class="brand-label">การเคหะแห่งชาติ — ฝ่ายบริหารทรัพย์สิน ชบ.</p>
+      <p class="brand-label">ฝ่ายบริหารทรัพย์สิน ชบ.</p>
       <h1 class="title">แดชบอร์ดหน่วยความรับผิดชอบ</h1>
     </div>
     <div class="top-meta">
@@ -1817,7 +1817,7 @@ function buildSummaryReportHTML(rows){
       <td>${t_total>0? pct(t_trans/t_total*100):'0.0'}%</td>
     </tr></tfoot>
   </table>`;
-  return reportShell('รายงานตารางสรุปรายกอง / สำนักงาน — การเคหะแห่งชาติ', meta, body,
+  return reportShell('รายงานตารางสรุปรายกอง / สำนักงาน', meta, body,
     'รายงานสร้างจากแดชบอร์ดหน่วยความรับผิดชอบ กคช. — คลิกปุ่ม “พิมพ์ / บันทึกเป็น PDF” ด้านบนเพื่อบันทึกไฟล์');
 }
 
@@ -1868,7 +1868,7 @@ function buildDetailReportHTML(rows){
     <thead><tr>${theadHtml}</tr></thead>
     <tbody>${detailRowsHtml}</tbody>
   </table>`;
-  return reportShell('รายงานตารางรายละเอียดโครงการ — การเคหะแห่งชาติ', meta, body,
+  return reportShell('รายงานตารางรายละเอียดโครงการ', meta, body,
     'รายงานสร้างจากแดชบอร์ดหน่วยความรับผิดชอบ กคช. — คลิกปุ่ม “พิมพ์ / บันทึกเป็น PDF” ด้านบนเพื่อบันทึกไฟล์');
 }
 
@@ -2320,7 +2320,7 @@ function buildSummaryReportHTMLActive(rows){
       ${statusKeys.map(k=>`<td>${fmt(rows.filter(r=>r.status===k).length)}</td>`).join('')}
     </tr></tfoot>
   </table>`;
-  return reportShell('รายงานตารางสรุปหน่วย Active — การเคหะแห่งชาติ', meta, body,
+  return reportShell('รายงานตารางสรุปหน่วย Active', meta, body,
     'รายงานสร้างจากแดชบอร์ดหน่วยความรับผิดชอบ กคช. — คลิกปุ่ม “พิมพ์ / บันทึกเป็น PDF” ด้านบนเพื่อบันทึกไฟล์');
 }
 function buildDetailReportHTMLActive(rows){
@@ -2344,7 +2344,7 @@ function buildDetailReportHTMLActive(rows){
   const meta = `วันที่ออกรายงาน: ${dateStr}<br>ตัวกรองที่ใช้: ${escapeHtml(currentFilterTextActive())}<br>จำนวนหน่วยในรายงาน: ${list.length.toLocaleString('th-TH')} หน่วย`;
   const body = `<h2>ตารางรายละเอียดหน่วย Active (${list.length.toLocaleString('th-TH')} หน่วย)</h2>
   <table><thead><tr>${theadHtml}</tr></thead><tbody>${rowsHtml}</tbody></table>`;
-  return reportShell('รายงานตารางรายละเอียดหน่วย Active — การเคหะแห่งชาติ', meta, body,
+  return reportShell('รายงานตารางรายละเอียดหน่วย Active', meta, body,
     'รายงานสร้างจากแดชบอร์ดหน่วยความรับผิดชอบ กคช. — คลิกปุ่ม “พิมพ์ / บันทึกเป็น PDF” ด้านบนเพื่อบันทึกไฟล์');
 }
 function exportSummaryExcelActive(){
@@ -2823,7 +2823,7 @@ function buildSummaryReportHTMLVacant(rows){
       ${statusKeys.map(k=>`<td>${fmt(rows.filter(r=>r.status===k).length)}</td>`).join('')}
     </tr></tfoot>
   </table>`;
-  return reportShell('รายงานตารางสรุปหน่วยว่าง — การเคหะแห่งชาติ', meta, body,
+  return reportShell('รายงานตารางสรุปหน่วยว่าง', meta, body,
     'รายงานสร้างจากแดชบอร์ดหน่วยความรับผิดชอบ กคช. — คลิกปุ่ม “พิมพ์ / บันทึกเป็น PDF” ด้านบนเพื่อบันทึกไฟล์');
 }
 function buildDetailReportHTMLVacant(rows){
@@ -2847,7 +2847,7 @@ function buildDetailReportHTMLVacant(rows){
   const meta = `วันที่ออกรายงาน: ${dateStr}<br>ตัวกรองที่ใช้: ${escapeHtml(currentFilterTextVacant())}<br>จำนวนหน่วยในรายงาน: ${list.length.toLocaleString('th-TH')} หน่วย`;
   const body = `<h2>ตารางรายละเอียดหน่วยว่าง (${list.length.toLocaleString('th-TH')} หน่วย)</h2>
   <table><thead><tr>${theadHtml}</tr></thead><tbody>${rowsHtml}</tbody></table>`;
-  return reportShell('รายงานตารางรายละเอียดหน่วยว่าง — การเคหะแห่งชาติ', meta, body,
+  return reportShell('รายงานตารางรายละเอียดหน่วยว่าง', meta, body,
     'รายงานสร้างจากแดชบอร์ดหน่วยความรับผิดชอบ กคช. — คลิกปุ่ม “พิมพ์ / บันทึกเป็น PDF” ด้านบนเพื่อบันทึกไฟล์');
 }
 function exportSummaryExcelVacant(){
@@ -3338,7 +3338,7 @@ function buildSummaryReportHTMLChange(rows){
       ${groupKeys.map(k=>`<td>${fmt(rows.filter(r=>r.group===k).length)}</td>`).join('')}
     </tr></tfoot>
   </table>`;
-  return reportShell('รายงานสรุปการเปลี่ยนแปลงหน่วยว่าง — การเคหะแห่งชาติ', meta, body,
+  return reportShell('รายงานสรุปการเปลี่ยนแปลงหน่วยว่าง', meta, body,
     'รายงานสร้างจากแดชบอร์ดหน่วยความรับผิดชอบ กคช. — คลิกปุ่ม “พิมพ์ / บันทึกเป็น PDF” ด้านบนเพื่อบันทึกไฟล์');
 }
 function buildDetailReportHTMLChange(rows){
@@ -3362,7 +3362,7 @@ function buildDetailReportHTMLChange(rows){
   const meta = `วันที่ออกรายงาน: ${dateStr}<br>ตัวกรองที่ใช้: ${escapeHtml(currentFilterTextChange())}<br>จำนวนหน่วยในรายงาน: ${list.length.toLocaleString('th-TH')} หน่วย`;
   const body = `<h2>ตารางรายละเอียดการเปลี่ยนแปลงหน่วยว่าง (${list.length.toLocaleString('th-TH')} หน่วย)</h2>
   <table><thead><tr>${theadHtml}</tr></thead><tbody>${rowsHtml}</tbody></table>`;
-  return reportShell('รายงานรายละเอียดการเปลี่ยนแปลงหน่วยว่าง — การเคหะแห่งชาติ', meta, body,
+  return reportShell('รายงานรายละเอียดการเปลี่ยนแปลงหน่วยว่าง', meta, body,
     'รายงานสร้างจากแดชบอร์ดหน่วยความรับผิดชอบ กคช. — คลิกปุ่ม “พิมพ์ / บันทึกเป็น PDF” ด้านบนเพื่อบันทึกไฟล์');
 }
 function exportSummaryExcelChange(){
