@@ -2025,25 +2025,27 @@ function renderChipsActive(){
 
 /* ---------- การ์ด KPI: หน่วย Active ทั้งหมด + 6 badge สถานะ (คลิกกรองได้) ---------- */
 function updateKpiActive(base){
-  const total = base.length;
+  const grandTotal = base.length; // ใช้เป็นตัวหารคำนวณ % ของการ์ดย่อยเสมอ (ไม่เปลี่ยนตามสถานะที่เลือก)
+  const rows = aStatusFilter ? base.filter(r=>r.status===aStatusFilter) : base;
+  const heroValue = rows.length; // การ์ดรวมโชว์ตามที่กำลังแสดงจริงในตาราง (รวม status filter ด้วย)
   const totalSelected = aStatusFilter===null;
-  const projCount = new Set(base.map(r=>r.proj_code)).size;
+  const heroProjCount = new Set(rows.map(r=>r.proj_code)).size;
   const totalProj = RAW_DATA.length;
 
   const cards = [];
   cards.push(`
     <div class="kpi active-hero${totalSelected?' selected':''}" data-status="__all__">
       <div class="kpi-label">หน่วย Active ทั้งหมด <span class="tag">${totalSelected?'แสดงทุกสถานะ':'คลิกเพื่อดูทุกสถานะ'}</span></div>
-      <div class="kpi-value tabular">${fmt(total)}</div>
+      <div class="kpi-value tabular">${fmt(heroValue)}</div>
       <div class="kpi-sub">รวมจาก 3 แหล่งข้อมูล: มีสัญญา, เช่าเหมา, เช่าซื้อรอโอน</div>
-      <div class="kpi-proj-badge">พบใน ${fmt(projCount)} โครงการ จาก ${fmt(totalProj)} โครงการทั้งหมด</div>
+      <div class="kpi-proj-badge">พบใน ${fmt(heroProjCount)} โครงการ จาก ${fmt(totalProj)} โครงการทั้งหมด</div>
     </div>`);
   ACTIVE_STATUS_ORDER.forEach(k=>{
     const subRows = base.filter(r=>r.status===k);
     const count = subRows.length;
     const subProjCount = new Set(subRows.map(r=>r.proj_code)).size;
     const isSel = aStatusFilter===k;
-    const percent = total>0 ? pct(count/total*100) : '0.0';
+    const percent = grandTotal>0 ? pct(count/grandTotal*100) : '0.0';
     const colorCls = ACTIVE_STATUS_COLOR[k];
     cards.push(`
       <div class="kpi ${colorCls}${isSel?' filtering':''}" data-status="${k}">
@@ -2541,24 +2543,26 @@ function renderChipsVacant(){
 
 /* ---------- การ์ด KPI: หน่วยว่างทั้งหมด + 4 การ์ดสถานะ (คลิกกรองได้) ---------- */
 function updateKpiVacant(base){
-  const total = base.length;
+  const grandTotal = base.length;
+  const rows = wStatusFilter ? base.filter(r=>r.status===wStatusFilter) : base;
+  const heroValue = rows.length;
   const totalSelected = wStatusFilter===null;
-  const projCount = new Set(base.map(r=>r.proj_code)).size;
+  const heroProjCount = new Set(rows.map(r=>r.proj_code)).size;
   const totalProj = RAW_DATA.length;
   const cards = [];
   cards.push(`
     <div class="kpi vacant-hero${totalSelected?' selected':''}" data-status="__all__">
       <div class="kpi-label">หน่วยว่างทั้งหมด <span class="tag">${totalSelected?'แสดงทุกสถานะ':'คลิกเพื่อดูทุกสถานะ'}</span></div>
-      <div class="kpi-value tabular">${fmt(total)}</div>
+      <div class="kpi-value tabular">${fmt(heroValue)}</div>
       <div class="kpi-sub">จากชีต "หน่วยว่าง"</div>
-      <div class="kpi-proj-badge">พบใน ${fmt(projCount)} โครงการ จาก ${fmt(totalProj)} โครงการทั้งหมด</div>
+      <div class="kpi-proj-badge">พบใน ${fmt(heroProjCount)} โครงการ จาก ${fmt(totalProj)} โครงการทั้งหมด</div>
     </div>`);
   VACANT_STATUS_ORDER.forEach(k=>{
     const subRows = base.filter(r=>r.status===k);
     const count = subRows.length;
     const subProjCount = new Set(subRows.map(r=>r.proj_code)).size;
     const isSel = wStatusFilter===k;
-    const percent = total>0 ? pct(count/total*100) : '0.0';
+    const percent = grandTotal>0 ? pct(count/grandTotal*100) : '0.0';
     const colorCls = VACANT_STATUS_COLOR[k];
     cards.push(`
       <div class="kpi ${colorCls}${isSel?' filtering':''}" data-status="${k}">
@@ -3028,24 +3032,26 @@ function renderChipsChange(){
 
 /* ---------- การ์ด KPI: รวม + 4 กลุ่ม (คลิกกรองได้) ---------- */
 function updateKpiChange(base){
-  const total = base.length;
+  const grandTotal = base.length;
+  const rows = chGroupFilter ? base.filter(r=>r.group===chGroupFilter) : base;
+  const heroValue = rows.length;
   const totalSelected = chGroupFilter===null;
-  const projCount = new Set(base.map(r=>r.proj_code)).size;
+  const heroProjCount = new Set(rows.map(r=>r.proj_code)).size;
   const totalProj = RAW_DATA.length;
   const cards = [];
   cards.push(`
     <div class="kpi change-hero${totalSelected?' selected':''}" data-group="__all__">
       <div class="kpi-label">หน่วยว่าง(เดิม)ทั้งหมด <span class="tag">${totalSelected?'แสดงทุกกลุ่ม':'คลิกเพื่อดูทุกกลุ่ม'}</span></div>
-      <div class="kpi-value tabular">${fmt(total)}</div>
+      <div class="kpi-value tabular">${fmt(heroValue)}</div>
       <div class="kpi-sub">เทียบ "หน่วยว่างเดิม" กับข้อมูลชุดใหม่</div>
-      <div class="kpi-proj-badge">พบใน ${fmt(projCount)} โครงการ จาก ${fmt(totalProj)} โครงการทั้งหมด</div>
+      <div class="kpi-proj-badge">พบใน ${fmt(heroProjCount)} โครงการ จาก ${fmt(totalProj)} โครงการทั้งหมด</div>
     </div>`);
   VACANT_CHANGE_GROUP_ORDER.forEach(g=>{
     const subRows = base.filter(r=>r.group===g);
     const count = subRows.length;
     const subProjCount = new Set(subRows.map(r=>r.proj_code)).size;
     const isSel = chGroupFilter===g;
-    const percent = total>0 ? pct(count/total*100) : '0.0';
+    const percent = grandTotal>0 ? pct(count/grandTotal*100) : '0.0';
     const colorCls = VACANT_CHANGE_GROUP_DEF[g].color;
     cards.push(`
       <div class="kpi ${colorCls}${isSel?' filtering':''}" data-group="${g}">
