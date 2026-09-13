@@ -930,6 +930,10 @@
         <select id="chBuilding" class="f-select"><option value="">ทั้งหมด</option></select>
       </div>
       <div class="filter-group">
+        <label for="chOldStatus">สถานะเดิม (ว่าง)</label>
+        <select id="chOldStatus" class="f-select"><option value="">ทั้งหมด</option></select>
+      </div>
+      <div class="filter-group">
         <label for="chSearch">ค้นหา</label>
         <input id="chSearch" class="f-search" type="text" placeholder="ชื่อโครงการ / รหัส / MAT">
       </div>
@@ -1153,6 +1157,7 @@ const FILTER_META = {
   fRedate:   {label:'การซื้อคืน',           color:'#06B6D4'},
   fRemark:   {label:'หมายเหตุ',             color:'#65A30D'},
   fPayFr:    {label:'PAY_FR',               color:'#EA580C'},
+  fOldStatus:{label:'สถานะเดิม (ว่าง)',      color:'#9333EA'},
   fSearch:   {label:'ค้นหา',                color:'#5B6480'}
 };
 let sortState = { summary:{key:'units_total',dir:-1}, detail:{key:'no',dir:1} };
@@ -2931,11 +2936,12 @@ const ALL_STATUS_LABEL = {
   rent:'(1) เช่า', lease_whole:'(2) เช่าเหมา', hire_purchase:'(3) เช่าซื้อ',
   pending_sale:'(4) จะซื้อจะขาย', guarantee:'(5) ติดค้ำประกันฯ', pending_transfer:'(6) รอโอน'
 };
-const changeFilterIds = ['chDiv','chOffice','chProjName','chType','chBuilding'];
-const FILTER_FIELD_CH = {chDiv:'div', chOffice:'office_name', chProjName:'proj_name', chType:'proj_type', chBuilding:'building_char'};
+const changeFilterIds = ['chDiv','chOffice','chProjName','chType','chBuilding','chOldStatus'];
+const FILTER_FIELD_CH = {chDiv:'div', chOffice:'office_name', chProjName:'proj_name', chType:'proj_type', chBuilding:'building_char', chOldStatus:'old_status_label'};
 const FILTER_META_CH = {
   chDiv: FILTER_META.fDiv, chOffice: FILTER_META.fOffice, chProjName: FILTER_META.fProjName,
-  chType: FILTER_META.fType, chBuilding: FILTER_META.fBuilding, chSearch: FILTER_META.fSearch
+  chType: FILTER_META.fType, chBuilding: FILTER_META.fBuilding, chOldStatus: FILTER_META.fOldStatus,
+  chSearch: FILTER_META.fSearch
 };
 
 let VACANT_CHANGE_UNITS = null;
@@ -2956,6 +2962,7 @@ function buildVacantChangeUnits(){
       const proj = projIndex[rec.p];
       return {
         mat: rec.m, proj_code: rec.p, group: rec.g, old_status: rec.os, new_status: rec.ns || '',
+        old_status_label: rec.os ? (ALL_STATUS_LABEL[rec.os] || rec.os) : '',
         div: proj.div, office_name: proj.office_name, proj_type: proj.proj_type,
         building_char: proj.building_char, proj_name: proj.proj_name
       };
@@ -2972,6 +2979,7 @@ function getChangeBase(excludeId){
     if(excludeId!=='chProjName' && vals.chProjName && r.proj_name!==vals.chProjName) return false;
     if(excludeId!=='chType' && vals.chType && r.proj_type!==vals.chType) return false;
     if(excludeId!=='chBuilding' && vals.chBuilding && r.building_char!==vals.chBuilding) return false;
+    if(excludeId!=='chOldStatus' && vals.chOldStatus && r.old_status_label!==vals.chOldStatus) return false;
     if(q){
       const hay = (r.proj_name+' '+r.proj_code+' '+r.mat).toLowerCase();
       if(!hay.includes(q)) return false;
