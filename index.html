@@ -2016,13 +2016,15 @@ function renderChipsActive(){
 function updateKpiActive(base){
   const total = base.length;
   const totalSelected = aStatusFilter===null;
+  const projCount = new Set(base.map(r=>r.proj_code)).size;
+  const totalProj = RAW_DATA.length;
 
   const cards = [];
   cards.push(`
     <div class="kpi active-hero${totalSelected?' selected':''}" data-status="__all__">
       <div class="kpi-label">หน่วย Active ทั้งหมด <span class="tag">${totalSelected?'แสดงทุกสถานะ':'คลิกเพื่อดูทุกสถานะ'}</span></div>
       <div class="kpi-value tabular">${fmt(total)}</div>
-      <div class="kpi-sub">รวมจาก 3 แหล่งข้อมูล: มีสัญญา, เช่าเหมา, เช่าซื้อรอโอน</div>
+      <div class="kpi-sub">รวมจาก 3 แหล่งข้อมูล: มีสัญญา, เช่าเหมา, เช่าซื้อรอโอน<br>พบใน <b>${fmt(projCount)}</b> โครงการ จาก ${fmt(totalProj)} โครงการทั้งหมด</div>
     </div>`);
   ACTIVE_STATUS_ORDER.forEach(k=>{
     const count = base.filter(r=>r.status===k).length;
@@ -2527,12 +2529,14 @@ function renderChipsVacant(){
 function updateKpiVacant(base){
   const total = base.length;
   const totalSelected = wStatusFilter===null;
+  const projCount = new Set(base.map(r=>r.proj_code)).size;
+  const totalProj = RAW_DATA.length;
   const cards = [];
   cards.push(`
     <div class="kpi vacant-hero${totalSelected?' selected':''}" data-status="__all__">
       <div class="kpi-label">หน่วยว่างทั้งหมด <span class="tag">${totalSelected?'แสดงทุกสถานะ':'คลิกเพื่อดูทุกสถานะ'}</span></div>
       <div class="kpi-value tabular">${fmt(total)}</div>
-      <div class="kpi-sub">จากชีต "หน่วยว่าง"</div>
+      <div class="kpi-sub">จากชีต "หน่วยว่าง"<br>พบใน <b>${fmt(projCount)}</b> โครงการ จาก ${fmt(totalProj)} โครงการทั้งหมด</div>
     </div>`);
   VACANT_STATUS_ORDER.forEach(k=>{
     const count = base.filter(r=>r.status===k).length;
