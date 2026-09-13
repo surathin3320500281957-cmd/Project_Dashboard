@@ -1260,9 +1260,10 @@ const donutValueLabelsPlugin = {
       if(!val) return;
       const props = arc.getProps(['x','y','startAngle','endAngle','innerRadius','outerRadius'], true);
       const angleSpan = props.endAngle - props.startAngle;
-      if(angleSpan < 0.22) return; // skip tiny slices to avoid clutter
       const mid = (props.startAngle + props.endAngle)/2;
-      const r = (props.innerRadius + props.outerRadius)/2;
+      const r = angleSpan < 0.22
+        ? props.outerRadius + 14 // เสี้ยวเล็กมาก: ดันป้ายออกไปนอกวงแหวนเล็กน้อย กันทับกับเสี้ยวข้างๆ
+        : (props.innerRadius + props.outerRadius)/2;
       const lx = props.x + Math.cos(mid)*r;
       const ly = props.y + Math.sin(mid)*r;
       const label = val.toLocaleString('th-TH');
