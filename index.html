@@ -1686,6 +1686,7 @@ function renderChips(){
       const id = btn.parentElement.getAttribute('data-clear');
       if(id==='kpiFilter'){
         kpiFilterOn = false;
+        selectedMetric = 'total'; // ไม่งั้น metric ย่อยที่เลือกไว้ (เช่น "เช่า") จะยังค้างขับเคลื่อนกราฟอยู่ ทั้งที่ตัวกรองตารางถูกปิดแล้ว
       } else {
         document.getElementById(id).value = '';
       }
