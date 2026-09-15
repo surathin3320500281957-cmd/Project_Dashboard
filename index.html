@@ -1971,12 +1971,12 @@ function openReportTab(html){
   win.document.write(html);
   win.document.close();
 }
-function reportShell(title, metaHtml, bodyHtml, footNote){
+function reportShell(title, metaHtml, bodyHtml, footNote, orientation='landscape'){
   return `<!DOCTYPE html>
 <html lang="th"><head><meta charset="UTF-8">
 <title>${title}</title>
 <style>
-  @page { size: A4 landscape; margin: 14mm; }
+  @page { size: A4 ${orientation}; margin: 14mm; }
   *{box-sizing:border-box;}
   body{font-family:'Sarabun','Tahoma',sans-serif;color:#161B2E;margin:0;padding:24px;font-size:12px;background:#fff;}
   h1{font-size:19px;margin:0 0 4px;}
@@ -4097,14 +4097,10 @@ function buildBlankSurveyFormHTML(rows){
   });
   const idCols = [
     ['div','กอง',false],
-    ['office_name','สำนักงาน',true],
-    ['type_name','รูปแบบหารายได้',false],
     ['proj_code','รหัสโครงการ',true],
     ['proj_name','ชื่อโครงการ',true],
-    ['mat','MAT',true],
     ['sub_model_name','แบบย่อย',true],
-    ['house_no','บ้านเลขที่',false],
-    ['status_label','สถานะ',true]
+    ['house_no','บ้านเลขที่',false]
   ];
   const theadHtml = idCols.map(([k,label,left])=>`<th${left?' style="text-align:left;"':''}>${escapeHtml(label)}</th>`).join('')
     + `<th>สภาพห้อง</th><th>ทรัพย์สิน</th><th>มิเตอร์น้ำ</th><th>มิเตอร์ไฟ</th><th style="min-width:130px;">หมายเหตุเพิ่มเติม</th>`;
@@ -4122,7 +4118,7 @@ function buildBlankSurveyFormHTML(rows){
   const body = `<h2>แบบฟอร์มตรวจอาคารว่างพร้อมขายด้านกายภาพ</h2>
   <table><thead><tr>${theadHtml}</tr></thead><tbody>${rowsHtml}</tbody></table>`;
   return reportShell('แบบฟอร์มตรวจอาคารว่างพร้อมขายด้านกายภาพ', meta, body,
-    'พิมพ์แบบฟอร์มนี้เพื่อใช้เดินสำรวจภาคสนาม — ทำเครื่องหมาย ○ ตามที่พบจริง แล้วนำผลไปกรอกกลับเข้า Google Sheet ตามคอลัมน์ที่ตรงกัน');
+    'พิมพ์แบบฟอร์มนี้เพื่อใช้เดินสำรวจภาคสนาม — ทำเครื่องหมาย ○ ตามที่พบจริง แล้วนำผลไปกรอกกลับเข้า Google Sheet ตามคอลัมน์ที่ตรงกัน', 'portrait');
 }
 function exportSummaryExcelPhysical(){
   const cols = getPhysicalSummaryColumns();
