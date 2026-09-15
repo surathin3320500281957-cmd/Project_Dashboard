@@ -122,6 +122,18 @@
 
   /* ===== Main ===== */
   main{max-width:1400px;margin:0 auto;padding:28px 32px 64px;}
+  .dup-mat-banner-wrap{max-width:1400px;margin:0 auto;padding:0 32px;}
+  .dup-mat-banner{
+    display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;
+    background:#FFF1F0;border:1px solid #FFB3AD;border-radius:10px;
+    padding:14px 18px;margin-top:16px;font-size:13.5px;color:#B42318;font-weight:600;
+  }
+  .dup-mat-banner b{color:#7A1710;}
+  .btn-warning{
+    background:#DC2626;color:#fff;border:none;border-radius:8px;padding:9px 16px;
+    font-family:inherit;font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap;transition:background .15s;
+  }
+  .btn-warning:hover{background:#B91C1C;}
   section{margin-bottom:36px;}
   .section-head{
     display:flex;align-items:baseline;justify-content:space-between;margin-bottom:14px;gap:12px;flex-wrap:wrap;
@@ -547,6 +559,13 @@
     <button class="btn btn-ghost" id="btnReset">ล้างตัวกรอง</button>
   </div>
   <div class="chip-bar" id="chipBar"></div>
+</div>
+
+<div class="dup-mat-banner-wrap no-print">
+  <div id="dupMatBanner" class="dup-mat-banner" style="display:none;">
+    <span>⚠️ พบ MAT ซ้ำระหว่างชีต "หน่วยว่าง" กับ "เช่าเหมา" <b id="dupMatCount">0</b> รายการ — หน่วยเดียวกันไม่ควรปรากฏทั้ง 2 ฝั่งพร้อมกัน ควรตรวจสอบข้อมูลต้นทาง</span>
+    <button class="btn-warning" id="btnDownloadDupMat">📥 ดาวน์โหลด Excel รายการที่ซ้ำ</button>
+  </div>
 </div>
 
 <main>
@@ -1287,6 +1306,65 @@ function fmt(n){ return Math.round(n).toLocaleString('th-TH'); }
 function pct(n){ return (n).toLocaleString('th-TH',{maximumFractionDigits:1,minimumFractionDigits:1}); }
 
 document.getElementById('lastUpdated').textContent = '13 กันยายน 2569';
+
+/* ---------- ตรวจสอบ MAT ซ้ำระหว่างหน่วยว่าง (source V) กับเช่าเหมา (source L) ----------
+   หน่วยเดียวกันไม่ควรปรากฏทั้ง 2 ฝั่งพร้อมกัน (เจอเคสนี้มาแล้วที่โครงการรามอินทรา ~408 หน่วย)
+   ใช้ AUDIT_DATA (PB64) ที่โหลดไว้แล้วตอนเปิดไฟล์ ไม่ต้องรอ tab หน่วยว่าง/หน่วย Active ถูกเปิดก่อน */
+let DUPLICATE_MAT_CHECK = [];
+function checkDuplicateMats(){
+  const vacantByMat = {};
+  const leaseByMat = {};
+  Object.keys(AUDIT_DATA).forEach(pc=>{
+    AUDIT_DATA[pc].forEach(rec=>{
+      if(rec.s === 'V') vacantByMat[rec.m] = {proj_code:pc, house_no:rec.h, bucket:rec.b};
+      else if(rec.s === 'L') leaseByMat[rec.m] = {proj_code:pc, house_no:rec.h};
+    });
+  });
+  const projIndex = {};
+  RAW_DATA.forEach(r=> projIndex[r.proj_code]=r);
+  DUPLICATE_MAT_CHECK = [];
+  Object.keys(vacantByMat).forEach(mat=>{
+    if(leaseByMat[mat]){
+      const v = vacantByMat[mat];
+      const l = leaseByMat[mat];
+      const proj = projIndex[v.proj_code] || {};
+      DUPLICATE_MAT_CHECK.push({
+        mat, proj_code: v.proj_code,
+        proj_name: proj.proj_name||'', div: proj.div||'', office_name: proj.office_name||'',
+        house_no_vacant: v.house_no||'', house_no_lease: l.house_no||'',
+        house_no_match: (String(v.house_no||'')===String(l.house_no||'')) ? 'ใช่' : 'ไม่ตรง',
+        status_vacant: v.bucket||''
+      });
+    }
+  });
+
+  const banner = document.getElementById('dupMatBanner');
+  if(DUPLICATE_MAT_CHECK.length > 0){
+    document.getElementById('dupMatCount').textContent = DUPLICATE_MAT_CHECK.length.toLocaleString('th-TH');
+    banner.style.display = 'flex';
+  } else {
+    banner.style.display = 'none';
+  }
+}
+function downloadDuplicateMatExcel(){
+  const data = DUPLICATE_MAT_CHECK.map(r=>({
+    'MAT': r.mat,
+    'รหัสโครงการ': r.proj_code,
+    'ชื่อโครงการ': r.proj_name,
+    'กอง': r.div,
+    'สำนักงาน': r.office_name,
+    'บ้านเลขที่ (หน่วยว่าง)': r.house_no_vacant,
+    'บ้านเลขที่ (เช่าเหมา)': r.house_no_lease,
+    'บ้านเลขที่ตรงกัน': r.house_no_match,
+    'สถานะหน่วยว่าง': r.status_vacant
+  }));
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.json_to_sheet(data);
+  XLSX.utils.book_append_sheet(wb, ws, 'MAT ซ้อนกัน');
+  const dateStr = new Date().toISOString().slice(0,10);
+  XLSX.writeFile(wb, `MAT_ซ้อนกัน_หน่วยว่าง_เช่าเหมา_${dateStr}.xlsx`);
+}
+document.getElementById('btnDownloadDupMat').addEventListener('click', downloadDuplicateMatExcel);
 
 /* ---------- Populate filter dropdowns ---------- */
 function uniqueSorted(arr){ return [...new Set(arr.filter(v=>v!==''))].sort((a,b)=>a.localeCompare(b,'th')); }
@@ -4102,6 +4180,7 @@ document.querySelectorAll('.sub-tab-btn').forEach(btn=>{
       throw new Error('unsupported');
     }
     await loadData();
+    checkDuplicateMats();
     renderDetailHeader();
     attachSort('detailTable','detail');
     initCharts();
