@@ -185,6 +185,18 @@
   .kpi.vacant-hero .kpi-proj-badge{color:#8A5A00;}
   .vacant-kpi-grid{grid-template-columns:repeat(4,1fr);}
   #wKpiGrid .kpi-label .tag{opacity:1;}
+  .kpi.physical-hero{
+    background:linear-gradient(135deg,#16A34A,#4ADE80);
+    border-top:none;color:#fff;
+    box-shadow:0 6px 18px rgba(22,163,74,0.28);
+  }
+  .kpi.physical-hero.selected{box-shadow:0 0 0 2.5px #063D1E, 0 6px 18px rgba(22,163,74,0.28);}
+  .kpi.physical-hero .kpi-label{color:#E3FFEE;}
+  .kpi.physical-hero .kpi-value{color:#fff;font-size:36px;}
+  .kpi.physical-hero .kpi-sub{color:#E3FFEE;}
+  .kpi.physical-hero .kpi-proj-badge{color:#0F5A28;}
+  .physical-kpi-grid{grid-template-columns:repeat(4,1fr);}
+  #phKpiGrid .kpi-label .tag{opacity:1;}
   /* ===== Tab switcher ===== */
   .tab-switcher{display:flex;gap:10px;padding:16px 24px 18px;background:var(--paper);}
   .tab-btn{
@@ -425,11 +437,11 @@
   }
 
   @media (max-width:1150px){
-    .kpi-grid, .active-kpi-grid, .vacant-kpi-grid, .change-kpi-grid{grid-template-columns:repeat(2,1fr);}
+    .kpi-grid, .active-kpi-grid, .vacant-kpi-grid, .change-kpi-grid, .physical-kpi-grid{grid-template-columns:repeat(2,1fr);}
     .chart-grid, .chart-grid.full{grid-template-columns:1fr;}
   }
   @media (max-width:640px){
-    .kpi-grid, .active-kpi-grid, .vacant-kpi-grid, .change-kpi-grid{grid-template-columns:repeat(2,1fr);}
+    .kpi-grid, .active-kpi-grid, .vacant-kpi-grid, .change-kpi-grid, .physical-kpi-grid{grid-template-columns:repeat(2,1fr);}
     header.top{padding:16px 18px;}
     .filter-inner,main,footer.page-footer{padding-left:18px;padding-right:18px;}
   }
@@ -487,6 +499,7 @@
   <button class="tab-btn active" data-tabpage="overview">ภาพรวม</button>
   <button class="tab-btn" data-tabpage="active">หน่วย Active</button>
   <button class="tab-btn" data-tabpage="vacant">หน่วยว่าง</button>
+  <button class="tab-btn" data-tabpage="physical">กายภาพหน่วยว่างพร้อมขาย</button>
 </div>
 
 <div id="page-overview" class="tab-page">
@@ -1040,6 +1053,143 @@
   </main>
 
 </div>
+
+</div>
+
+<div id="page-physical" class="tab-page hidden">
+
+  <div class="filter-bar no-print">
+    <div class="filter-inner">
+      <div class="filter-group">
+        <label for="phDiv">กอง</label>
+        <select id="phDiv" class="f-select"><option value="">ทั้งหมด</option></select>
+      </div>
+      <div class="filter-group">
+        <label for="phOffice">สำนักงาน</label>
+        <select id="phOffice" class="f-select"><option value="">ทั้งหมด</option></select>
+      </div>
+      <div class="filter-group">
+        <label for="phProjName">ชื่อโครงการ</label>
+        <select id="phProjName" class="f-select"><option value="">ทั้งหมด</option></select>
+      </div>
+      <div class="filter-group">
+        <label for="phType">ประเภทโครงการ</label>
+        <select id="phType" class="f-select"><option value="">ทั้งหมด</option></select>
+      </div>
+      <div class="filter-group">
+        <label for="phIncome">รูปแบบหารายได้</label>
+        <select id="phIncome" class="f-select"><option value="">ทั้งหมด</option></select>
+      </div>
+      <div class="filter-group">
+        <label for="phBuilding">ลักษณะอาคาร</label>
+        <select id="phBuilding" class="f-select"><option value="">ทั้งหมด</option></select>
+      </div>
+      <div class="filter-group">
+        <label for="phRedate">การซื้อคืน</label>
+        <select id="phRedate" class="f-select"><option value="">ทั้งหมด</option></select>
+      </div>
+      <div class="filter-group">
+        <label for="phRemark">หมายเหตุ</label>
+        <select id="phRemark" class="f-select"><option value="">ทั้งหมด</option></select>
+      </div>
+      <div class="filter-group">
+        <label for="phSearch">ค้นหา</label>
+        <input id="phSearch" class="f-search" type="text" placeholder="ชื่อโครงการ / รหัส / MAT / บ้านเลขที่">
+      </div>
+      <div class="filter-spacer"></div>
+      <span class="result-count" id="phResultCount"></span>
+      <button class="btn btn-ghost" id="phBtnReset">ล้างตัวกรอง</button>
+    </div>
+    <div class="chip-bar" id="phChipBar"></div>
+  </div>
+
+  <main>
+
+    <section id="phKpiSection">
+      <div class="section-head">
+        <h2 class="section-title"><span class="n"></span>กายภาพหน่วยว่างพร้อมขาย</h2>
+        <span class="section-sub">เฉพาะหน่วยสถานะ "ว่างพร้อมขาย" (เพื่อเช่า/เพื่อขาย) จากชีต "หน่วยว่าง" — เตรียมไว้สำหรับเดินสำรวจสภาพกายภาพภาคสนาม (รอผลสำรวจจาก Google Sheet ในรอบถัดไป) — คลิกการ์ดสถานะเพื่อกรอง (คลิกซ้ำหรือคลิก "ทั้งหมด" เพื่อยกเลิก)</span>
+      </div>
+      <div class="kpi-grid physical-kpi-grid" id="phKpiGrid"></div>
+    </section>
+
+    <section>
+      <div class="section-head">
+        <h2 class="section-title"><span class="n"></span>ภาพรวมเชิงกราฟ</h2>
+        <span class="section-sub" id="phMetricLabel">จำนวนหน่วย (ตามตัวกรอง/สถานะปัจจุบัน)</span>
+      </div>
+      <div class="chart-grid">
+        <div class="chart-card">
+          <h3>สัดส่วนตามกอง</h3>
+          <div class="chart-note" id="phNoteDiv">จำนวนหน่วยแยกตามกอง</div>
+          <div class="chart-wrap donut-wrap"><canvas id="chartPhysicalDonut"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <h3>อันดับสำนักงาน (ทั้งหมด)</h3>
+          <div class="chart-note" id="phNoteOffice">เรียงตามจำนวนหน่วย</div>
+          <div class="rank-list" id="phRankOffice"></div>
+        </div>
+      </div>
+      <div class="chart-grid full">
+        <div class="chart-card" style="grid-column:1/-1;">
+          <h3>อันดับโครงการ (Top 10)</h3>
+          <div class="chart-note" id="phNoteProject">เรียงตามจำนวนหน่วย</div>
+          <div class="rank-list" id="phRankProject"></div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-head">
+        <h2 class="section-title"><span class="n"></span>ตารางสรุปรายกอง / โครงการ</h2>
+        <span class="section-sub">ไม่กดการ์ดสถานะ = โชว์ครบทั้ง 2 สถานะ · กดการ์ด = เหลือคอลัมน์เดียวตามสถานะที่เลือก</span>
+      </div>
+      <div class="table-card">
+        <div class="table-toolbar no-print">
+          <span class="result-count" id="phSummaryCount"></span>
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-pdf" id="phBtnSummaryPdf">📄 ส่งออก PDF</button>
+            <button class="btn btn-excel" id="phBtnSummaryExcel">📊 ส่งออก Excel</button>
+          </div>
+        </div>
+        <div class="table-scroll">
+          <table id="phSummaryTable">
+            <thead><tr id="phSummaryHeadRow"></tr></thead>
+            <tbody id="phSummaryBody"></tbody>
+            <tfoot><tr id="phSummaryFoot"></tr></tfoot>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-head">
+        <h2 class="section-title"><span class="n"></span>ตารางรายละเอียดหน่วย (ระดับ MAT)</h2>
+        <span class="section-sub">1 แถว = 1 หน่วยว่างพร้อมขาย — คอลัมน์สำรวจกายภาพจะเพิ่มเข้ามาเมื่อได้ข้อมูลจาก Google Sheet</span>
+      </div>
+      <div class="table-card">
+        <div class="table-toolbar no-print">
+          <span class="result-count" id="phDetailCount"></span>
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-pdf" id="phBtnDetailPdf">📄 ส่งออก PDF</button>
+            <button class="btn btn-excel" id="phBtnDetailExcel">📊 ส่งออก Excel</button>
+          </div>
+        </div>
+        <div class="table-scroll">
+          <table id="phDetailTable">
+            <thead><tr id="phDetailHeadRow"></tr></thead>
+            <tbody id="phDetailBody"></tbody>
+          </table>
+        </div>
+        <div class="table-pager no-print">
+          <button class="btn btn-ghost" id="phDetailPrev">← ก่อนหน้า</button>
+          <span id="phDetailPagerInfo"></span>
+          <button class="btn btn-ghost" id="phDetailNext">ถัดไป →</button>
+        </div>
+      </div>
+    </section>
+
+  </main>
 
 </div>
 
@@ -3446,6 +3596,480 @@ async function initVacantChangeTab(){
   refreshChange();
 }
 
+/* ==================================================================
+   ========  TAB "กายภาพหน่วยว่างพร้อมขาย" (ระดับหน่วย/MAT)  =========
+   ใช้ข้อมูลจากชีต "หน่วยว่าง" ชุดเดียวกับ tab หน่วยว่าง แต่กรองเฉพาะ
+   สถานะ "ว่างพร้อมขาย" (ready_rent + ready_sale) เท่านั้น — เตรียมไว้
+   สำหรับ join ผลสำรวจกายภาพจาก Google Sheet ด้วย MAT ในรอบถัดไป
+   ================================================================== */
+
+const PHYSICAL_STATUS_ORDER = ['ready_rent','ready_sale'];
+const physicalFilterIds = ['phDiv','phOffice','phProjName','phType','phIncome','phBuilding','phRedate','phRemark'];
+const FILTER_FIELD_PH = {phDiv:'div', phOffice:'office_name', phProjName:'proj_name', phType:'proj_type', phIncome:'type_name', phBuilding:'building_char', phRedate:'redate_status', phRemark:'stock_rmk_display'};
+const FILTER_META_PH = {
+  phDiv: FILTER_META.fDiv, phOffice: FILTER_META.fOffice, phProjName: FILTER_META.fProjName,
+  phType: FILTER_META.fType, phIncome: FILTER_META.fIncome, phBuilding: FILTER_META.fBuilding,
+  phRedate: FILTER_META.fRedate, phRemark: FILTER_META.fRemark, phSearch: FILTER_META.fSearch
+};
+
+let PHYSICAL_UNITS = null;
+let physicalTabInited = false;
+let phStatusFilter = null;
+let phDetailPage = 0;
+let phLastDetailRows = [];
+let chPhysicalDonut;
+sortState.summaryPhysical = { key:'total', dir:-1 };
+sortState.detailPhysical = { key:'proj_code', dir:1 };
+
+async function buildPhysicalUnits(){
+  const allVacant = await buildVacantUnits(); // ใช้ข้อมูลชุดเดียวกับ tab หน่วยว่าง (VC64 join กับ RAW_DATA)
+  return allVacant.filter(r => PHYSICAL_STATUS_ORDER.includes(r.status)); // เหลือเฉพาะ "ว่างพร้อมขาย"
+}
+
+function getPhysicalBase(excludeId){
+  const vals = {};
+  physicalFilterIds.forEach(id=> vals[id]=document.getElementById(id).value);
+  const q = document.getElementById('phSearch').value.trim().toLowerCase();
+  return PHYSICAL_UNITS.filter(r=>{
+    if(excludeId!=='phDiv' && vals.phDiv && r.div!==vals.phDiv) return false;
+    if(excludeId!=='phOffice' && vals.phOffice && r.office_name!==vals.phOffice) return false;
+    if(excludeId!=='phProjName' && vals.phProjName && r.proj_name!==vals.phProjName) return false;
+    if(excludeId!=='phType' && vals.phType && r.proj_type!==vals.phType) return false;
+    if(excludeId!=='phIncome' && vals.phIncome && r.type_name!==vals.phIncome) return false;
+    if(excludeId!=='phBuilding' && vals.phBuilding && r.building_char!==vals.phBuilding) return false;
+    if(excludeId!=='phRedate' && vals.phRedate && r.redate_status!==vals.phRedate) return false;
+    if(excludeId!=='phRemark' && vals.phRemark && r.stock_rmk_display!==vals.phRemark) return false;
+    if(q){
+      const hay = (r.proj_name+' '+r.proj_code+' '+r.mat+' '+r.house_no+' '+r.office_name).toLowerCase();
+      if(!hay.includes(q)) return false;
+    }
+    return true;
+  });
+}
+function getPhysicalRows(){
+  const base = getPhysicalBase();
+  return phStatusFilter ? base.filter(r=>r.status===phStatusFilter) : base;
+}
+
+function updateFilterOptionsPhysical(){
+  physicalFilterIds.forEach(id=>{
+    const field = FILTER_FIELD_PH[id];
+    const rowsForThis = getPhysicalBase(id);
+    const values = uniqueSorted(rowsForThis.map(r=>r[field]));
+    const el = document.getElementById(id);
+    const current = el.value;
+    el.innerHTML = '<option value="">ทั้งหมด</option>';
+    fillSelect(id, values);
+    if(current && !values.includes(current)){
+      const o=document.createElement('option'); o.value=current; o.textContent=current+' (ไม่มีผลลัพธ์)';
+      el.appendChild(o);
+    }
+    el.value = current;
+  });
+}
+function currentFilterTextPhysical(){
+  const filterVals = physicalFilterIds.map(id=>document.getElementById(id).value).filter(Boolean);
+  const q = document.getElementById('phSearch').value.trim();
+  const parts = [...filterVals];
+  if(q) parts.push(`ค้นหา "${q}"`);
+  if(phStatusFilter) parts.push(`สถานะ: ${VACANT_STATUS_DEF[phStatusFilter].label}`);
+  return parts.length? parts.join(' · ') : 'ไม่มีการกรอง (แสดงข้อมูลทั้งหมด)';
+}
+function renderChipsPhysical(){
+  const chipBar = document.getElementById('phChipBar');
+  const chips = [];
+  physicalFilterIds.forEach(id=>{
+    const val = document.getElementById(id).value;
+    if(val){
+      const meta = FILTER_META_PH[id];
+      chips.push(`<span class="chip" style="background:${meta.color};" data-clear="${id}">${meta.label}: ${escapeHtml(val)}<button type="button" aria-label="ลบตัวกรอง">✕</button></span>`);
+    }
+  });
+  const q = document.getElementById('phSearch').value.trim();
+  if(q){
+    chips.push(`<span class="chip" style="background:${FILTER_META_PH.phSearch.color};" data-clear="phSearch">ค้นหา: “${escapeHtml(q)}”<button type="button" aria-label="ลบตัวกรอง">✕</button></span>`);
+  }
+  if(phStatusFilter){
+    chips.push(`<span class="chip" style="background:#B97D00;" data-clear="phStatus">สถานะ: ${escapeHtml(VACANT_STATUS_DEF[phStatusFilter].label)}<button type="button" aria-label="ยกเลิกกรองสถานะ">✕</button></span>`);
+  }
+  chipBar.innerHTML = chips.join('');
+  chipBar.querySelectorAll('.chip button').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const id = btn.parentElement.getAttribute('data-clear');
+      if(id==='phStatus'){ phStatusFilter = null; }
+      else { document.getElementById(id).value = ''; }
+      refreshPhysical();
+    });
+  });
+}
+
+/* ---------- การ์ด KPI: รวม + 2 สถานะ (คลิกกรองได้) ---------- */
+function updateKpiPhysical(base){
+  const grandTotal = base.length;
+  const rows = phStatusFilter ? base.filter(r=>r.status===phStatusFilter) : base;
+  const heroValue = rows.length;
+  const totalSelected = phStatusFilter===null;
+  const heroProjCount = new Set(rows.map(r=>r.proj_code)).size;
+  const totalProj = RAW_DATA.length;
+  const cards = [];
+  cards.push(`
+    <div class="kpi physical-hero${totalSelected?' selected':''}" data-status="__all__">
+      <div class="kpi-label">หน่วยว่างพร้อมขายทั้งหมด <span class="tag">${totalSelected?'แสดงทุกสถานะ':'คลิกเพื่อดูทุกสถานะ'}</span></div>
+      <div class="kpi-value tabular">${fmt(heroValue)}</div>
+      <div class="kpi-sub">จากชีต "หน่วยว่าง" (เฉพาะพร้อมขาย)</div>
+      <div class="kpi-proj-badge">พบใน ${fmt(heroProjCount)} โครงการ จาก ${fmt(totalProj)} โครงการทั้งหมด</div>
+    </div>`);
+  PHYSICAL_STATUS_ORDER.forEach(k=>{
+    const subRows = base.filter(r=>r.status===k);
+    const count = subRows.length;
+    const subProjCount = new Set(subRows.map(r=>r.proj_code)).size;
+    const isSel = phStatusFilter===k;
+    const percent = grandTotal>0 ? pct(count/grandTotal*100) : '0.0';
+    const colorCls = VACANT_STATUS_COLOR[k];
+    cards.push(`
+      <div class="kpi ${colorCls}${isSel?' filtering':''}" data-status="${k}">
+        <div class="kpi-label">${VACANT_STATUS_DEF[k].label} <span class="tag">${isSel?'กำลังกรอง ✕':'คลิกเพื่อกรอง'}</span></div>
+        <div class="kpi-value tabular">${fmt(count)}</div>
+        <div class="kpi-sub"><b>${percent}%</b> ของหน่วยว่างพร้อมขายทั้งหมด · ${fmt(subProjCount)} โครงการ</div>
+      </div>`);
+  });
+  document.getElementById('phKpiGrid').innerHTML = cards.join('');
+  document.querySelectorAll('#phKpiGrid .kpi').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      const k = el.getAttribute('data-status');
+      if(k==='__all__'){ phStatusFilter = null; }
+      else { phStatusFilter = (phStatusFilter===k) ? null : k; }
+      refreshPhysical();
+    });
+  });
+}
+
+/* ---------- กราฟ ---------- */
+function initPhysicalCharts(){
+  const ctx = document.getElementById('chartPhysicalDonut').getContext('2d');
+  chPhysicalDonut = new Chart(ctx,{
+    type:'doughnut',
+    data:{labels:[],datasets:[{data:[],backgroundColor:PALETTE}]},
+    options:{
+      responsive:true,maintainAspectRatio:false,cutout:'62%',
+      plugins:{legend:{position:'bottom',labels:{boxWidth:12,font:{family:'Sarabun',size:11}}}}
+    }
+  });
+}
+function updateChartsPhysical(rows){
+  const divs = uniqueSorted(rows.map(r=>r.div));
+  const divVals = divs.map(d=> rows.filter(r=>r.div===d).length);
+  chPhysicalDonut.data.labels = divs;
+  chPhysicalDonut.data.datasets[0].data = divVals;
+  chPhysicalDonut.update();
+
+  const offices = uniqueSorted(rows.map(r=>r.office_name));
+  let officeAggPh = offices.map(o=>({
+    name: o.replace(/สำนักงาน/g,'').trim() || o,
+    val: rows.filter(r=>r.office_name===o).length
+  })).filter(o=>o.val>0).sort((a,b)=>b.val-a.val);
+  renderRankList('phRankOffice', officeAggPh);
+
+  const projMap = {};
+  rows.forEach(r=>{
+    if(!projMap[r.proj_code]) projMap[r.proj_code] = {name:r.proj_name, val:0};
+    projMap[r.proj_code].val++;
+  });
+  let projAggPh = Object.values(projMap).filter(p=>p.val>0).sort((a,b)=>b.val-a.val).slice(0,10);
+  renderRankList('phRankProject', projAggPh);
+}
+
+/* ---------- ตารางสรุป (กอง -> โครงการ) ---------- */
+function getPhysicalSummaryColumns(){
+  const cols = [
+    ['office_name','กอง / สำนักงาน','str',true],
+    ['proj_name','ชื่อโครงการ','str',true],
+    ['total','รวมหน่วยว่างพร้อมขาย','num',false]
+  ];
+  const statusList = phStatusFilter ? [phStatusFilter] : PHYSICAL_STATUS_ORDER;
+  statusList.forEach(k=> cols.push([k, VACANT_STATUS_DEF[k].label, 'num', false]));
+  return cols;
+}
+function projAggPhysical(sub, proj_name, office_name, div){
+  const rec = { proj_name, office_name, div, total: sub.length };
+  PHYSICAL_STATUS_ORDER.forEach(k=> rec[k] = sub.filter(r=>r.status===k).length);
+  return rec;
+}
+function buildGroupedSummaryPhysical(rows){
+  const divs = uniqueSorted(rows.map(r=>r.div));
+  const {key,dir} = sortState.summaryPhysical;
+  return divs.map((d,i)=>{
+    const groupRows = rows.filter(r=>r.div===d);
+    const projMap = {};
+    groupRows.forEach(r=>{
+      if(!projMap[r.proj_code]) projMap[r.proj_code] = { proj_name:r.proj_name, office_name:r.office_name, rows:[] };
+      projMap[r.proj_code].rows.push(r);
+    });
+    const projects = Object.values(projMap).map(p=> projAggPhysical(p.rows, p.proj_name, p.office_name, d));
+    projects.sort((a,b)=>{
+      let av=a[key], bv=b[key];
+      if(typeof av==='string') return av.localeCompare(bv,'th')*dir;
+      return (av-bv)*dir;
+    });
+    const totals = projAggPhysical(groupRows, '', '', d);
+    return { div:d, style: GROUP_STYLES[i % GROUP_STYLES.length], projects, totals };
+  });
+}
+function renderSummaryHeaderPhysical(){
+  const cols = getPhysicalSummaryColumns();
+  document.getElementById('phSummaryHeadRow').innerHTML = cols.map(([key,label,type,left])=>
+    `<th${left?' class="text-left"':''} data-key="${key}" data-type="${type}">${escapeHtml(label)}<span class="arrow"></span></th>`
+  ).join('');
+  return cols;
+}
+function renderSummaryPhysical(rows){
+  const cols = renderSummaryHeaderPhysical();
+  attachSort('phSummaryTable','summaryPhysical', refreshPhysical);
+  const statusKeys = cols.map(c=>c[0]).filter(k=>PHYSICAL_STATUS_ORDER.includes(k));
+  const groups = buildGroupedSummaryPhysical(rows);
+  const body = document.getElementById('phSummaryBody');
+  body.innerHTML = groups.map(g=>{
+    const t = g.totals;
+    const groupCells = [
+      `<td>กอง ${g.div} <span style="font-weight:400;opacity:.75;">(${g.projects.length} โครงการ)</span></td>`,
+      `<td class="text-left"></td>`,
+      `<td class="tabular"><span class="active-chip" style="background:var(--gold-tint);color:#B97D00;">${fmt(t.total)}</span></td>`,
+      ...statusKeys.map(k=>`<td class="tabular">${fmt(t[k])}</td>`)
+    ].join('');
+    const projHtml = g.projects.map(p=>{
+      const cells = [
+        `<td class="text-left">${escapeHtml(p.office_name)}</td>`,
+        `<td class="text-left">${escapeHtml(p.proj_name)}</td>`,
+        `<td class="tabular"><span class="active-chip" style="background:var(--gold-tint);color:#B97D00;">${fmt(p.total)}</span></td>`,
+        ...statusKeys.map(k=>`<td class="tabular">${fmt(p[k])}</td>`)
+      ].join('');
+      return `<tr class="office-row">${cells}</tr>`;
+    }).join('');
+    return `<tr class="group-row" style="background:${g.style.bg};color:${g.style.text};border-left:4px solid ${g.style.border};">${groupCells}</tr>` + projHtml;
+  }).join('');
+
+  const allProjects = groups.flatMap(g=>g.projects);
+  document.getElementById('phSummaryFoot').innerHTML = [
+    `<td>รวมทั้งหมดทุกกอง</td>`,
+    `<td class="text-left"></td>`,
+    `<td class="tabular"><span class="active-chip" style="background:var(--gold-tint);color:#B97D00;">${fmt(rows.length)}</span></td>`,
+    ...statusKeys.map(k=>`<td class="tabular">${fmt(rows.filter(r=>r.status===k).length)}</td>`)
+  ].join('');
+
+  window._currentSummaryPhysical = allProjects;
+  window._currentGroupsPhysical = groups;
+  document.getElementById('phSummaryCount').innerHTML = `พบ <b>${allProjects.length.toLocaleString('th-TH')}</b> โครงการ ใน <b>${groups.length.toLocaleString('th-TH')}</b> กอง`;
+}
+
+/* ---------- ตารางรายละเอียด (ระดับหน่วย/MAT) ---------- */
+function getPhysicalDetailColumns(){
+  return [
+    ['div','กอง','str',false],
+    ['office_name','สำนักงาน','str',true],
+    ['proj_type','ประเภทโครงการ','str',false],
+    ['type_name','รูปแบบหารายได้','str',false],
+    ['building_char','ลักษณะอาคาร','str',false],
+    ['proj_code','รหัสโครงการ','str',true],
+    ['proj_name','ชื่อโครงการ','str',true],
+    ['mat','MAT','str',true],
+    ['sub_model_name','แบบย่อย','str',false],
+    ['house_no','บ้านเลขที่','str',false],
+    ['status_label','สถานะ','str',false],
+    ['contract_status','CONTRACT_STATUS','str',false],
+    ['end_guarantee_date','สิ้นสุดค้ำประกัน','str',false],
+    ['redate','วันที่ซื้อคืน','str',false],
+    ['datek','จำนวนวันซื้อคืน','num',false],
+    ['stock_rmk','หมายเหตุ','str',false],
+    ['ref_no','อ้างถึง','str',false]
+  ];
+}
+function getPhysicalDetailCellValue(r, key){
+  switch(key){
+    case 'status_label': return VACANT_STATUS_DEF[r.status].label;
+    default: return r[key];
+  }
+}
+function renderDetailHeaderPhysical(){
+  const cols = getPhysicalDetailColumns();
+  document.getElementById('phDetailHeadRow').innerHTML = cols.map(([key,label,type,left])=>
+    `<th${left?' class="text-left"':''} data-key="${key}" data-type="${type}">${escapeHtml(label)}<span class="arrow"></span></th>`
+  ).join('');
+  return cols;
+}
+function renderDetailPhysical(rows){
+  phLastDetailRows = rows;
+  const cols = renderDetailHeaderPhysical();
+  attachSort('phDetailTable','detailPhysical', ()=>{ phDetailPage = 0; refreshPhysical(); });
+  const {key,dir} = sortState.detailPhysical;
+  const list = [...rows].sort((a,b)=>{
+    const av = getPhysicalDetailCellValue(a,key), bv = getPhysicalDetailCellValue(b,key);
+    if(typeof av==='string') return (av||'').localeCompare(bv||'','th')*dir;
+    return ((av||0)-(bv||0))*dir;
+  });
+  window._currentDetailPhysical = list;
+
+  const totalPages = Math.max(1, Math.ceil(list.length / A_DETAIL_PAGE_SIZE));
+  if(phDetailPage >= totalPages) phDetailPage = totalPages - 1;
+  if(phDetailPage < 0) phDetailPage = 0;
+  const startIdx = phDetailPage * A_DETAIL_PAGE_SIZE;
+  const pageRows = list.slice(startIdx, startIdx + A_DETAIL_PAGE_SIZE);
+
+  const body = document.getElementById('phDetailBody');
+  body.innerHTML = pageRows.map(r=>{
+    const cells = cols.map(([key,label,type,left])=>{
+      const v = getPhysicalDetailCellValue(r, key);
+      const display = (v===''||v===undefined||v===null) ? '—' : escapeHtml(String(v));
+      return `<td${left?' class="text-left"':''}>${display}</td>`;
+    }).join('');
+    return `<tr>${cells}</tr>`;
+  }).join('');
+  document.getElementById('phDetailCount').innerHTML = `พบ <b>${list.length.toLocaleString('th-TH')}</b> หน่วย`;
+
+  const showFrom = list.length ? startIdx+1 : 0;
+  const showTo = Math.min(startIdx+A_DETAIL_PAGE_SIZE, list.length);
+  const pagerInfo = document.getElementById('phDetailPagerInfo');
+  if(pagerInfo) pagerInfo.textContent = `แสดง ${showFrom.toLocaleString('th-TH')}–${showTo.toLocaleString('th-TH')} จาก ${list.length.toLocaleString('th-TH')} หน่วย (หน้า ${phDetailPage+1}/${totalPages})`;
+  const prevBtn = document.getElementById('phDetailPrev');
+  const nextBtn = document.getElementById('phDetailNext');
+  if(prevBtn) prevBtn.disabled = phDetailPage<=0;
+  if(nextBtn) nextBtn.disabled = phDetailPage>=totalPages-1;
+}
+
+/* ---------- Export: PDF + Excel ---------- */
+function buildSummaryReportHTMLPhysical(rows){
+  const cols = getPhysicalSummaryColumns();
+  const statusKeys = cols.map(c=>c[0]).filter(k=>PHYSICAL_STATUS_ORDER.includes(k));
+  const groups = buildGroupedSummaryPhysical(rows);
+  const allProjects = groups.flatMap(g=>g.projects);
+
+  const theadHtml = cols.map(([k,label,type,left])=>`<th${left?' style="text-align:left;"':''}>${escapeHtml(label)}</th>`).join('');
+  const bodyHtml = groups.map(g=>{
+    const t = g.totals;
+    const groupRow = `<tr style="background:${g.style.bg};">
+      <td style="text-align:left;font-weight:700;color:${g.style.text};">กอง ${escapeHtml(g.div)} (${g.projects.length} โครงการ)</td>
+      <td style="text-align:left;"></td>
+      <td>${fmt(t.total)}</td>
+      ${statusKeys.map(k=>`<td>${fmt(t[k])}</td>`).join('')}
+    </tr>`;
+    const projRows = g.projects.map(p=>`<tr>
+      <td style="text-align:left;padding-left:22px;">${escapeHtml(p.office_name)}</td>
+      <td style="text-align:left;">${escapeHtml(p.proj_name)}</td>
+      <td>${fmt(p.total)}</td>
+      ${statusKeys.map(k=>`<td>${fmt(p[k])}</td>`).join('')}
+    </tr>`).join('');
+    return groupRow + projRows;
+  }).join('');
+
+  const dateStr = new Date().toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'});
+  const meta = `วันที่ออกรายงาน: ${dateStr}<br>ตัวกรองที่ใช้: ${escapeHtml(currentFilterTextPhysical())}<br>โครงการในรายงาน: ${allProjects.length.toLocaleString('th-TH')} โครงการ ใน ${groups.length} กอง`;
+  const body = `<h2>ตารางสรุปกายภาพหน่วยว่างพร้อมขาย รายกอง / โครงการ</h2>
+  <table>
+    <thead><tr>${theadHtml}</tr></thead>
+    <tbody>${bodyHtml}</tbody>
+    <tfoot><tr>
+      <td style="text-align:left;">รวมทั้งหมดทุกกอง</td>
+      <td style="text-align:left;"></td>
+      <td>${fmt(rows.length)}</td>
+      ${statusKeys.map(k=>`<td>${fmt(rows.filter(r=>r.status===k).length)}</td>`).join('')}
+    </tr></tfoot>
+  </table>`;
+  return reportShell('รายงานตารางสรุปกายภาพหน่วยว่างพร้อมขาย', meta, body,
+    'รายงานสร้างจากแดชบอร์ดหน่วยความรับผิดชอบ กคช. — คลิกปุ่ม “พิมพ์ / บันทึกเป็น PDF” ด้านบนเพื่อบันทึกไฟล์');
+}
+function buildDetailReportHTMLPhysical(rows){
+  const cols = getPhysicalDetailColumns();
+  const {key,dir} = sortState.detailPhysical;
+  const list = [...rows].sort((a,b)=>{
+    const av = getPhysicalDetailCellValue(a,key), bv = getPhysicalDetailCellValue(b,key);
+    if(typeof av==='string') return (av||'').localeCompare(bv||'','th')*dir;
+    return ((av||0)-(bv||0))*dir;
+  });
+  const theadHtml = cols.map(([k,label,type,left])=>`<th${left?' style="text-align:left;"':''}>${escapeHtml(label)}</th>`).join('');
+  const rowsHtml = list.map(r=>{
+    const tds = cols.map(([k,label,type,left])=>{
+      const v = getPhysicalDetailCellValue(r,k);
+      const display = (v===''||v===undefined||v===null)?'—':escapeHtml(String(v));
+      return `<td${left?' style="text-align:left;"':''}>${display}</td>`;
+    }).join('');
+    return `<tr>${tds}</tr>`;
+  }).join('');
+  const dateStr = new Date().toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'});
+  const meta = `วันที่ออกรายงาน: ${dateStr}<br>ตัวกรองที่ใช้: ${escapeHtml(currentFilterTextPhysical())}<br>จำนวนหน่วยในรายงาน: ${list.length.toLocaleString('th-TH')} หน่วย`;
+  const body = `<h2>ตารางรายละเอียดกายภาพหน่วยว่างพร้อมขาย (${list.length.toLocaleString('th-TH')} หน่วย)</h2>
+  <table><thead><tr>${theadHtml}</tr></thead><tbody>${rowsHtml}</tbody></table>`;
+  return reportShell('รายงานตารางรายละเอียดกายภาพหน่วยว่างพร้อมขาย', meta, body,
+    'รายงานสร้างจากแดชบอร์ดหน่วยความรับผิดชอบ กคช. — คลิกปุ่ม “พิมพ์ / บันทึกเป็น PDF” ด้านบนเพื่อบันทึกไฟล์');
+}
+function exportSummaryExcelPhysical(){
+  const cols = getPhysicalSummaryColumns();
+  const data = (window._currentSummaryPhysical||[]).map(r=>{
+    const row = {};
+    cols.forEach(([k,label])=>{ row[label] = r[k]; });
+    return row;
+  });
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.json_to_sheet(data);
+  XLSX.utils.book_append_sheet(wb, ws, 'สรุปกายภาพพร้อมขาย');
+  const dateStr = new Date().toISOString().slice(0,10);
+  XLSX.writeFile(wb, `ตารางสรุปกายภาพหน่วยว่างพร้อมขาย_${dateStr}.xlsx`);
+}
+function exportDetailExcelPhysical(){
+  const cols = getPhysicalDetailColumns();
+  const data = (window._currentDetailPhysical||[]).map(r=>{
+    const row = {};
+    cols.forEach(([k,label])=>{ row[label] = getPhysicalDetailCellValue(r,k); });
+    return row;
+  });
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.json_to_sheet(data);
+  XLSX.utils.book_append_sheet(wb, ws, 'รายละเอียดกายภาพพร้อมขาย');
+  const dateStr = new Date().toISOString().slice(0,10);
+  XLSX.writeFile(wb, `ตารางรายละเอียดกายภาพหน่วยว่างพร้อมขาย_${dateStr}.xlsx`);
+}
+
+/* ---------- Master refresh + init (lazy) ---------- */
+function refreshPhysical(){
+  updateFilterOptionsPhysical();
+  const base = getPhysicalBase();
+  renderChipsPhysical();
+  updateKpiPhysical(base);
+  const rows = phStatusFilter ? base.filter(r=>r.status===phStatusFilter) : base;
+  phDetailPage = 0;
+  updateChartsPhysical(rows);
+  renderSummaryPhysical(rows);
+  renderDetailPhysical(rows);
+  document.getElementById('phResultCount').innerHTML = `พบ <b>${rows.length.toLocaleString('th-TH')}</b> หน่วย จากทั้งหมด ${PHYSICAL_UNITS.length.toLocaleString('th-TH')}`;
+}
+
+async function initPhysicalTab(){
+  if(physicalTabInited) return;
+  physicalTabInited = true;
+  PHYSICAL_UNITS = await buildPhysicalUnits();
+  initPhysicalCharts();
+  physicalFilterIds.forEach(id=> document.getElementById(id).addEventListener('change', refreshPhysical));
+  document.getElementById('phSearch').addEventListener('input', ()=>{
+    clearTimeout(window._phSearchDebounce);
+    window._phSearchDebounce = setTimeout(refreshPhysical, 180);
+  });
+  document.getElementById('phBtnReset').addEventListener('click', ()=>{
+    physicalFilterIds.forEach(id=> document.getElementById(id).value = '');
+    document.getElementById('phSearch').value = '';
+    phStatusFilter = null;
+    refreshPhysical();
+  });
+  document.getElementById('phDetailPrev').addEventListener('click', ()=>{
+    if(phDetailPage>0){ phDetailPage--; renderDetailPhysical(phLastDetailRows); }
+  });
+  document.getElementById('phDetailNext').addEventListener('click', ()=>{
+    phDetailPage++; renderDetailPhysical(phLastDetailRows);
+  });
+  document.getElementById('phBtnSummaryPdf').addEventListener('click', ()=> openReportTab(buildSummaryReportHTMLPhysical(getPhysicalRows())));
+  document.getElementById('phBtnSummaryExcel').addEventListener('click', exportSummaryExcelPhysical);
+  document.getElementById('phBtnDetailPdf').addEventListener('click', ()=> openReportTab(buildDetailReportHTMLPhysical(getPhysicalRows())));
+  document.getElementById('phBtnDetailExcel').addEventListener('click', exportDetailExcelPhysical);
+  refreshPhysical();
+}
+
 /* ---------- แถบสลับ tab หลัก + sub-tab ---------- */
 document.querySelectorAll('.tab-btn').forEach(btn=>{
   btn.addEventListener('click', ()=>{
@@ -3454,8 +4078,10 @@ document.querySelectorAll('.tab-btn').forEach(btn=>{
     document.getElementById('page-overview').classList.toggle('hidden', target!=='overview');
     document.getElementById('page-active').classList.toggle('hidden', target!=='active');
     document.getElementById('page-vacant').classList.toggle('hidden', target!=='vacant');
+    document.getElementById('page-physical').classList.toggle('hidden', target!=='physical');
     if(target==='active') initActiveTab();
     if(target==='vacant') initVacantTab();
+    if(target==='physical') initPhysicalTab();
   });
 });
 document.querySelectorAll('.sub-tab-btn').forEach(btn=>{
