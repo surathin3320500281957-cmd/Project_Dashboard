@@ -115,6 +115,8 @@
   .btn-pdf:hover{background:#E23F44;}
   .btn-excel{background:var(--green);border-color:var(--green);color:#fff;}
   .btn-excel:hover{background:#16A34A;}
+  .btn-form{background:#0D9488;border-color:#0D9488;color:#fff;}
+  .btn-form:hover{background:#0B7A70;}
   .btn-ghost{border-color:transparent;color:var(--slate);}
   .btn-ghost:hover{background:var(--line-soft);}
   .result-count{font-size:13px;color:var(--slate);white-space:nowrap;}
@@ -1192,6 +1194,7 @@
           <div style="display:flex;gap:8px;">
             <button class="btn btn-pdf" id="phBtnDetailPdf">📄 ส่งออก PDF</button>
             <button class="btn btn-excel" id="phBtnDetailExcel">📊 ส่งออก Excel</button>
+            <button class="btn btn-form" id="phBtnBlankForm">📋 พิมพ์แบบฟอร์มเปล่า (สำรวจภาคสนาม)</button>
           </div>
         </div>
         <div class="table-scroll">
@@ -4078,6 +4081,49 @@ function buildDetailReportHTMLPhysical(rows){
   return reportShell('รายงานตารางรายละเอียดกายภาพหน่วยว่างพร้อมขาย', meta, body,
     'รายงานสร้างจากแดชบอร์ดหน่วยความรับผิดชอบ กคช. — คลิกปุ่ม “พิมพ์ / บันทึกเป็น PDF” ด้านบนเพื่อบันทึกไฟล์');
 }
+
+/* ---------- แบบฟอร์มตรวจอาคารว่างพร้อมขายด้านกายภาพ (กระดาษเปล่า สำหรับถือเดินสำรวจ) ----------
+   ใส่ข้อมูลระบุหน่วยที่รู้อยู่แล้ว (กอง/สำนักงาน/โครงการ/MAT/บ้านเลขที่/สถานะ) ไว้ล่วงหน้า
+   ส่วนคอลัมน์ที่ต้องไปตรวจหน้างาน (สภาพห้อง/ทรัพย์สิน/มิเตอร์น้ำ/มิเตอร์ไฟ) เว้นว่างเป็นวงกลม ○
+   ให้ทำเครื่องหมายด้วยมือ แล้วนำผลไปกรอกกลับเข้า Google Sheet ตามคอลัมน์ที่ตรงกัน */
+function buildBlankSurveyFormHTML(rows){
+  const officeFilter = document.getElementById('phOffice').value;
+  const headerOffice = officeFilter || 'การเคหะแห่งชาติ (ทุกสำนักงานที่กรองไว้)';
+  const {key,dir} = sortState.detailPhysical;
+  const list = [...rows].sort((a,b)=>{
+    const av = getPhysicalDetailCellValue(a,key), bv = getPhysicalDetailCellValue(b,key);
+    if(typeof av==='string') return (av||'').localeCompare(bv||'','th')*dir;
+    return ((av||0)-(bv||0))*dir;
+  });
+  const idCols = [
+    ['div','กอง',false],
+    ['office_name','สำนักงาน',true],
+    ['type_name','รูปแบบหารายได้',false],
+    ['proj_code','รหัสโครงการ',true],
+    ['proj_name','ชื่อโครงการ',true],
+    ['mat','MAT',true],
+    ['sub_model_name','แบบย่อย',true],
+    ['house_no','บ้านเลขที่',false],
+    ['status_label','สถานะ',true]
+  ];
+  const theadHtml = idCols.map(([k,label,left])=>`<th${left?' style="text-align:left;"':''}>${escapeHtml(label)}</th>`).join('')
+    + `<th>สภาพห้อง</th><th>ทรัพย์สิน</th><th>มิเตอร์น้ำ</th><th>มิเตอร์ไฟ</th><th style="min-width:130px;">หมายเหตุเพิ่มเติม</th>`;
+  const checkCell = (opt1, opt2) => `<td style="text-align:left;white-space:nowrap;">○ ${opt1}<br>○ ${opt2}</td>`;
+  const rowsHtml = list.map(r=>{
+    const idTds = idCols.map(([k,label,left])=>{
+      const v = getPhysicalDetailCellValue(r,k);
+      const display = (v===''||v===undefined||v===null)?'—':escapeHtml(String(v));
+      return `<td${left?' style="text-align:left;"':''}>${display}</td>`;
+    }).join('');
+    return `<tr>${idTds}${checkCell('ซ่อม','ไม่ต้องซ่อม')}${checkCell('มี','ไม่มี')}${checkCell('มี','ไม่มี')}${checkCell('มี','ไม่มี')}<td></td></tr>`;
+  }).join('');
+  const dateStr = new Date().toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'});
+  const meta = `${escapeHtml(headerOffice)}<br>วันที่พิมพ์: ${dateStr}<br>ตัวกรองที่ใช้: ${escapeHtml(currentFilterTextPhysical())}<br>จำนวนหน่วยในแบบฟอร์ม: ${list.length.toLocaleString('th-TH')} หน่วย`;
+  const body = `<h2>แบบฟอร์มตรวจอาคารว่างพร้อมขายด้านกายภาพ</h2>
+  <table><thead><tr>${theadHtml}</tr></thead><tbody>${rowsHtml}</tbody></table>`;
+  return reportShell('แบบฟอร์มตรวจอาคารว่างพร้อมขายด้านกายภาพ', meta, body,
+    'พิมพ์แบบฟอร์มนี้เพื่อใช้เดินสำรวจภาคสนาม — ทำเครื่องหมาย ○ ตามที่พบจริง แล้วนำผลไปกรอกกลับเข้า Google Sheet ตามคอลัมน์ที่ตรงกัน');
+}
 function exportSummaryExcelPhysical(){
   const cols = getPhysicalSummaryColumns();
   const data = (window._currentSummaryPhysical||[]).map(r=>{
@@ -4145,6 +4191,7 @@ async function initPhysicalTab(){
   document.getElementById('phBtnSummaryExcel').addEventListener('click', exportSummaryExcelPhysical);
   document.getElementById('phBtnDetailPdf').addEventListener('click', ()=> openReportTab(buildDetailReportHTMLPhysical(getPhysicalRows())));
   document.getElementById('phBtnDetailExcel').addEventListener('click', exportDetailExcelPhysical);
+  document.getElementById('phBtnBlankForm').addEventListener('click', ()=> openReportTab(buildBlankSurveyFormHTML(getPhysicalRows())));
   refreshPhysical();
 }
 
