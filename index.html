@@ -4104,24 +4104,24 @@ function buildBlankSurveyFormHTML(rows){
     ['plan_no','เลขผัง',false],
     ['house_no','บ้านเลขที่',false]
   ];
-  const theadHtml = idCols.map(([k,label,left])=>`<th${left?' style="text-align:left;"':''}>${escapeHtml(label)}</th>`).join('')
+  const theadHtml = `<th style="width:34px;">ลำดับ</th>` + idCols.map(([k,label,left])=>`<th${left?' style="text-align:left;"':''}>${escapeHtml(label)}</th>`).join('')
     + `<th>สภาพห้อง</th><th>ทรัพย์สิน</th><th>มิเตอร์น้ำ</th><th>มิเตอร์ไฟ</th><th style="min-width:130px;">หมายเหตุเพิ่มเติม</th>`;
   const checkCell = (opt1, opt2) => `<td style="text-align:left;white-space:nowrap;">○ ${opt1}<br>○ ${opt2}</td>`;
-  const rowsHtml = list.map(r=>{
+  const rowsHtml = list.map((r,i)=>{
     const idTds = idCols.map(([k,label,left])=>{
       const v = getPhysicalDetailCellValue(r,k);
       const display = (v===''||v===undefined||v===null)?'—':escapeHtml(String(v));
       return `<td${left?' style="text-align:left;"':''}>${display}</td>`;
     }).join('');
-    return `<tr>${idTds}${checkCell('ซ่อม','ไม่ต้องซ่อม')}${checkCell('มี','ไม่มี')}${checkCell('มี','ไม่มี')}${checkCell('มี','ไม่มี')}<td></td></tr>`;
+    return `<tr><td>${i+1}</td>${idTds}${checkCell('ซ่อม','ไม่ต้องซ่อม')}${checkCell('มี','ไม่มี')}${checkCell('มี','ไม่มี')}${checkCell('มี','ไม่มี')}<td></td></tr>`;
   }).join('');
   const dateStr = new Date().toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'});
   const meta = `${escapeHtml(headerOffice)}<br>วันที่พิมพ์: ${dateStr}<br>ชื่อโครงการ: ${escapeHtml(projNameFilter || 'ทุกโครงการที่กรองไว้')}<br>จำนวนหน่วยในแบบฟอร์ม: ${list.length.toLocaleString('th-TH')} หน่วย`;
   const body = `<style>
-    .meta{font-size:11.5px!important;font-weight:700!important;color:#161B2E!important;}
-    h2{font-size:16px!important;}
-    table{font-size:12.5px!important;}
-    th,td{font-size:12px!important;font-weight:700!important;padding:7px 9px!important;}
+    .meta{font-size:10.5px!important;font-weight:700!important;color:#161B2E!important;}
+    h2{font-size:15px!important;}
+    table{font-size:11px!important;}
+    th,td{font-size:10.5px!important;font-weight:700!important;padding:8px 10px!important;}
   </style>
   <h2>แบบฟอร์มตรวจอาคารว่างพร้อมขายด้านกายภาพ</h2>
   <table><thead><tr>${theadHtml}</tr></thead><tbody>${rowsHtml}</tbody></table>`;
