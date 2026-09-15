@@ -4087,8 +4087,10 @@ function buildDetailReportHTMLPhysical(rows){
    ส่วนคอลัมน์ที่ต้องไปตรวจหน้างาน (สภาพห้อง/ทรัพย์สิน/มิเตอร์น้ำ/มิเตอร์ไฟ) เว้นว่างเป็นวงกลม ○
    ให้ทำเครื่องหมายด้วยมือ แล้วนำผลไปกรอกกลับเข้า Google Sheet ตามคอลัมน์ที่ตรงกัน */
 function buildBlankSurveyFormHTML(rows){
+  const divFilter = document.getElementById('phDiv').value;
   const officeFilter = document.getElementById('phOffice').value;
-  const headerOffice = officeFilter || 'การเคหะแห่งชาติ (ทุกสำนักงานที่กรองไว้)';
+  const projNameFilter = document.getElementById('phProjName').value;
+  const headerOffice = [divFilter?`กอง ${divFilter}`:'', officeFilter].filter(Boolean).join(' ') || 'การเคหะแห่งชาติ (ทุกกอง/สำนักงานที่กรองไว้)';
   const {key,dir} = sortState.detailPhysical;
   const list = [...rows].sort((a,b)=>{
     const av = getPhysicalDetailCellValue(a,key), bv = getPhysicalDetailCellValue(b,key);
@@ -4096,7 +4098,6 @@ function buildBlankSurveyFormHTML(rows){
     return ((av||0)-(bv||0))*dir;
   });
   const idCols = [
-    ['div','กอง',false],
     ['proj_code','รหัสโครงการ',true],
     ['proj_name','ชื่อโครงการ',true],
     ['sub_model_name','แบบย่อย',true],
@@ -4114,8 +4115,14 @@ function buildBlankSurveyFormHTML(rows){
     return `<tr>${idTds}${checkCell('ซ่อม','ไม่ต้องซ่อม')}${checkCell('มี','ไม่มี')}${checkCell('มี','ไม่มี')}${checkCell('มี','ไม่มี')}<td></td></tr>`;
   }).join('');
   const dateStr = new Date().toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'});
-  const meta = `${escapeHtml(headerOffice)}<br>วันที่พิมพ์: ${dateStr}<br>ตัวกรองที่ใช้: ${escapeHtml(currentFilterTextPhysical())}<br>จำนวนหน่วยในแบบฟอร์ม: ${list.length.toLocaleString('th-TH')} หน่วย`;
-  const body = `<h2>แบบฟอร์มตรวจอาคารว่างพร้อมขายด้านกายภาพ</h2>
+  const meta = `${escapeHtml(headerOffice)}<br>วันที่พิมพ์: ${dateStr}<br>ชื่อโครงการ: ${escapeHtml(projNameFilter || 'ทุกโครงการที่กรองไว้')}<br>จำนวนหน่วยในแบบฟอร์ม: ${list.length.toLocaleString('th-TH')} หน่วย`;
+  const body = `<style>
+    .meta{font-size:14px!important;font-weight:700!important;color:#161B2E!important;}
+    h2{font-size:19px!important;}
+    table{font-size:15px!important;}
+    th,td{font-size:14.5px!important;font-weight:700!important;padding:9px 11px!important;}
+  </style>
+  <h2>แบบฟอร์มตรวจอาคารว่างพร้อมขายด้านกายภาพ</h2>
   <table><thead><tr>${theadHtml}</tr></thead><tbody>${rowsHtml}</tbody></table>`;
   return reportShell('แบบฟอร์มตรวจอาคารว่างพร้อมขายด้านกายภาพ', meta, body,
     'พิมพ์แบบฟอร์มนี้เพื่อใช้เดินสำรวจภาคสนาม — ทำเครื่องหมาย ○ ตามที่พบจริง แล้วนำผลไปกรอกกลับเข้า Google Sheet ตามคอลัมน์ที่ตรงกัน', 'portrait');
