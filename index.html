@@ -357,6 +357,11 @@
   .chart-wrap.donut-wrap{height:200px;max-width:80%;margin:0 auto;}
   .chart-grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;}
   .chart-wrap.donut-wrap-sm{height:150px;max-width:92%;margin:0 auto;}
+  .chart-empty-note{
+    display:none;position:absolute;inset:0;align-items:center;justify-content:center;text-align:center;
+    font-size:12px;color:var(--slate-light);padding:0 12px;
+  }
+  .chart-empty-note.show{display:flex;}
   @media (max-width:900px){ .chart-grid-4{grid-template-columns:repeat(2,1fr);} }
 
   /* ===== Ranking bar list (labeled colored bar + value badge) ===== */
@@ -1173,19 +1178,19 @@
       <div class="chart-grid-4">
         <div class="chart-card">
           <h3>สภาพห้อง</h3>
-          <div class="chart-wrap donut-wrap-sm"><canvas id="chartRoomDonut"></canvas></div>
+          <div class="chart-wrap donut-wrap-sm"><canvas id="chartRoomDonut"></canvas><div class="chart-empty-note" id="emptyRoomDonut">ยังไม่มีข้อมูลสำรวจตามตัวกรองนี้</div></div>
         </div>
         <div class="chart-card">
           <h3>ทรัพย์สิน</h3>
-          <div class="chart-wrap donut-wrap-sm"><canvas id="chartAssetDonut"></canvas></div>
+          <div class="chart-wrap donut-wrap-sm"><canvas id="chartAssetDonut"></canvas><div class="chart-empty-note" id="emptyAssetDonut">ยังไม่มีข้อมูลสำรวจตามตัวกรองนี้</div></div>
         </div>
         <div class="chart-card">
           <h3>มิเตอร์น้ำ</h3>
-          <div class="chart-wrap donut-wrap-sm"><canvas id="chartWaterDonut"></canvas></div>
+          <div class="chart-wrap donut-wrap-sm"><canvas id="chartWaterDonut"></canvas><div class="chart-empty-note" id="emptyWaterDonut">ยังไม่มีข้อมูลสำรวจตามตัวกรองนี้</div></div>
         </div>
         <div class="chart-card">
           <h3>มิเตอร์ไฟ</h3>
-          <div class="chart-wrap donut-wrap-sm"><canvas id="chartElecDonut"></canvas></div>
+          <div class="chart-wrap donut-wrap-sm"><canvas id="chartElecDonut"></canvas><div class="chart-empty-note" id="emptyElecDonut">ยังไม่มีข้อมูลสำรวจตามตัวกรองนี้</div></div>
         </div>
       </div>
     </section>
@@ -3191,7 +3196,7 @@ function refreshVacant(){
 async function initVacantTab(){
   if(vacantTabInited) return;
   vacantTabInited = true;
-  VACANT_UNITS = await buildVacantUnits();
+  if(!VACANT_UNITS){ VACANT_UNITS = await buildVacantUnits(); } // ถ้า tab กายภาพฯ เคยสร้างไว้แล้ว ใช้ซ้ำได้เลย
   initVacantCharts();
   vacantFilterIds.forEach(id=> document.getElementById(id).addEventListener('change', refreshVacant));
   document.getElementById('wSearch').addEventListener('input', ()=>{
@@ -3764,7 +3769,10 @@ sortState.summaryPhysical = { key:'total', dir:-1 };
 sortState.detailPhysical = { key:'proj_code', dir:1 };
 
 async function buildPhysicalUnits(){
-  const allVacant = await buildVacantUnits(); // ใช้ข้อมูลชุดเดียวกับ tab หน่วยว่าง (VC64 join กับ RAW_DATA)
+  // ถ้าเคยเปิด tab "หน่วยว่าง" มาก่อนแล้ว ข้อมูลชุดนี้ถูกถอดรหัส+ join ไว้ใน VACANT_UNITS อยู่แล้ว
+  // ใช้ซ้ำได้เลย ไม่ต้องถอดรหัส VC64 ใหม่อีกรอบ (ประหยัดเวลาเข้า tab นี้ครั้งแรกได้มาก)
+  if(!VACANT_UNITS){ VACANT_UNITS = await buildVacantUnits(); } // แคชไว้ให้ tab หน่วยว่างใช้ต่อด้วย ถ้าเปิด tab นี้ก่อน
+  const allVacant = VACANT_UNITS;
   const physical = allVacant.filter(r => PHYSICAL_STATUS_ORDER.includes(r.status)); // เหลือเฉพาะ "ว่างพร้อมขาย"
 
   /* Join ข้อมูลสำรวจสภาพกายภาพจากชีต "กายภาพหน่วยว่าง" (SV64) ด้วย MAT — ถ้ายังไม่มีผลสำรวจ
@@ -3992,14 +4000,17 @@ function updateChartsPhysical(rows){
     const noCount = surveyedWithVal.filter(r=>isNo(r[field])).length;
     return [surveyedWithVal.length - noCount, noCount];
   };
-  chRoomDonut.data.datasets[0].data = countYesNo('room_condition');
-  chRoomDonut.update();
-  chAssetDonut.data.datasets[0].data = countYesNo('asset');
-  chAssetDonut.update();
-  chWaterDonut.data.datasets[0].data = countYesNo('water_meter');
-  chWaterDonut.update();
-  chElecDonut.data.datasets[0].data = countYesNo('elec_meter');
-  chElecDonut.update();
+  const updateMiniDonut = (chart, field, emptyId) => {
+    const data = countYesNo(field);
+    chart.data.datasets[0].data = data;
+    chart.update();
+    const hasData = data[0]+data[1] > 0;
+    document.getElementById(emptyId).classList.toggle('show', !hasData);
+  };
+  updateMiniDonut(chRoomDonut, 'room_condition', 'emptyRoomDonut');
+  updateMiniDonut(chAssetDonut, 'asset', 'emptyAssetDonut');
+  updateMiniDonut(chWaterDonut, 'water_meter', 'emptyWaterDonut');
+  updateMiniDonut(chElecDonut, 'elec_meter', 'emptyElecDonut');
 }
 
 /* ---------- ตารางสรุป (กอง -> โครงการ) ---------- */
