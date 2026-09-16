@@ -4199,15 +4199,15 @@ function buildBlankSurveyFormHTML(rows){
   const dateStr = new Date().toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'});
   const meta = `${escapeHtml(headerOffice)}<br>วันที่พิมพ์: ${dateStr}<br>ชื่อโครงการ: ${escapeHtml(projNameFilter || 'ทุกโครงการที่กรองไว้')}<br>จำนวนหน่วยในแบบฟอร์ม: ${list.length.toLocaleString('th-TH')} หน่วย (สำรวจแล้ว ${surveyedInForm.toLocaleString('th-TH')} หน่วย แถบสีเขียว = สำรวจแล้ว)`;
   const body = `<style>
-    .meta{font-size:10.5px!important;font-weight:700!important;color:#161B2E!important;}
-    h2{font-size:15px!important;}
-    table{font-size:11px!important;}
-    th,td{font-size:10.5px!important;font-weight:700!important;padding:8px 10px!important;}
+    .meta{font-size:13px!important;font-weight:700!important;color:#161B2E!important;}
+    h2{font-size:18px!important;}
+    table{font-size:14px!important;}
+    th,td{font-size:13.5px!important;font-weight:700!important;padding:9px 11px!important;}
   </style>
   <h2>แบบฟอร์มตรวจอาคารว่างพร้อมขายด้านกายภาพ</h2>
   <table><thead><tr>${theadHtml}</tr></thead><tbody>${rowsHtml}</tbody></table>`;
   return reportShell('แบบฟอร์มตรวจอาคารว่างพร้อมขายด้านกายภาพ', meta, body,
-    'พิมพ์แบบฟอร์มนี้เพื่อใช้เดินสำรวจภาคสนาม — ทำเครื่องหมาย ○ ตามที่พบจริง แล้วนำผลไปกรอกกลับเข้า Google Sheet ตามคอลัมน์ที่ตรงกัน', 'portrait');
+    'พิมพ์แบบฟอร์มนี้เพื่อใช้เดินสำรวจภาคสนาม — ทำเครื่องหมาย ○ ตามที่พบจริง แล้วนำผลไปกรอกกลับเข้า Google Sheet ตามคอลัมน์ที่ตรงกัน', 'landscape');
 }
 function exportSummaryExcelPhysical(){
   const cols = getPhysicalSummaryColumns();
