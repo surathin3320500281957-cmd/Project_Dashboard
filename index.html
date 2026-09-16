@@ -1183,20 +1183,6 @@
 
     <section>
       <div class="section-head">
-        <h2 class="section-title"><span class="n"></span>ภาพรวมเชิงกราฟ</h2>
-        <span class="section-sub" id="phMetricLabel">จำนวนหน่วย (ตามตัวกรอง/สถานะปัจจุบัน)</span>
-      </div>
-      <div class="chart-grid full">
-        <div class="chart-card" style="grid-column:1/-1;">
-          <h3>อันดับโครงการ (Top 10)</h3>
-          <div class="chart-note" id="phNoteProject">เรียงตามจำนวนหน่วย</div>
-          <div class="rank-list" id="phRankProject"></div>
-        </div>
-      </div>
-    </section>
-
-    <section>
-      <div class="section-head">
         <h2 class="section-title"><span class="n"></span>ตารางสรุปรายกอง / โครงการ</h2>
         <span class="section-sub">ไม่กดการ์ดสถานะ = โชว์ครบทั้ง 2 สถานะ · กดการ์ด = เหลือคอลัมน์เดียวตามสถานะที่เลือก</span>
       </div>
@@ -3919,14 +3905,6 @@ function initPhysicalCharts(){
   });
 }
 function updateChartsPhysical(rows){
-  const projMap = {};
-  rows.forEach(r=>{
-    if(!projMap[r.proj_code]) projMap[r.proj_code] = {name:r.proj_name, val:0};
-    projMap[r.proj_code].val++;
-  });
-  let projAggPh = Object.values(projMap).filter(p=>p.val>0).sort((a,b)=>b.val-a.val).slice(0,10);
-  renderRankList('phRankProject', projAggPh);
-
   /* ความคืบหน้าการสำรวจ + ผลสำรวจแยกตามหัวข้อ — นับเฉพาะหน่วยที่สำรวจแล้ว, เช็คแบบ "มีคำว่าไม่" เพื่อรองรับคำที่ใช้จริงในชีต (ซ่อม/ไม่ซ่อม, มี/ไม่มี) */
   const surveyedRows = rows.filter(r=>r.surveyed);
   chSurveyDonut.data.datasets[0].data = [surveyedRows.length, rows.length - surveyedRows.length];
