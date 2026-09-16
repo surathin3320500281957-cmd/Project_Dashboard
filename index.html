@@ -526,7 +526,7 @@
   <button class="tab-btn active" data-tabpage="overview">ภาพรวม</button>
   <button class="tab-btn" data-tabpage="active">หน่วย Active</button>
   <button class="tab-btn" data-tabpage="vacant">หน่วยว่าง</button>
-  <button class="tab-btn" data-tabpage="physical">สภาพภาพอาคารว่างพร้อมขาย</button>
+  <button class="tab-btn" data-tabpage="physical">สภาพอาคารว่างพร้อมขาย</button>
 </div>
 
 <div id="page-overview" class="tab-page">
@@ -1145,7 +1145,7 @@
 
     <section id="phKpiSection">
       <div class="section-head">
-        <h2 class="section-title"><span class="n"></span>สภาพภาพอาคารว่างพร้อมขาย</h2>
+        <h2 class="section-title"><span class="n"></span>สภาพอาคารว่างพร้อมขาย</h2>
         <span class="section-sub">เฉพาะหน่วยสถานะ "ว่างพร้อมขาย" (เพื่อเช่า/เพื่อขาย) จากชีต "หน่วยว่าง" — join ผลสำรวจสภาพกายภาพจากชีต "กายภาพหน่วยว่าง" ด้วย MAT (การสำรวจเป็นแบบสะสม เพิ่มเติมได้เรื่อยๆ) — คลิกการ์ดสถานะเพื่อกรอง (คลิกซ้ำหรือคลิก "ทั้งหมด" เพื่อยกเลิก)</span>
       </div>
       <div class="kpi-grid physical-kpi-grid" id="phKpiGrid"></div>
@@ -1199,18 +1199,6 @@
       <div class="section-head">
         <h2 class="section-title"><span class="n"></span>ภาพรวมเชิงกราฟ</h2>
         <span class="section-sub" id="phMetricLabel">จำนวนหน่วย (ตามตัวกรอง/สถานะปัจจุบัน)</span>
-      </div>
-      <div class="chart-grid">
-        <div class="chart-card">
-          <h3>สัดส่วนตามกอง</h3>
-          <div class="chart-note" id="phNoteDiv">จำนวนหน่วยแยกตามกอง</div>
-          <div class="chart-wrap donut-wrap"><canvas id="chartPhysicalDonut"></canvas></div>
-        </div>
-        <div class="chart-card">
-          <h3>อันดับสำนักงาน (ทั้งหมด)</h3>
-          <div class="chart-note" id="phNoteOffice">เรียงตามจำนวนหน่วย</div>
-          <div class="rank-list" id="phRankOffice"></div>
-        </div>
       </div>
       <div class="chart-grid full">
         <div class="chart-card" style="grid-column:1/-1;">
@@ -3741,7 +3729,7 @@ async function initVacantChangeTab(){
 }
 
 /* ==================================================================
-   ========  TAB "สภาพภาพอาคารว่างพร้อมขาย" (ระดับหน่วย/MAT)  =========
+   ========  TAB "สภาพอาคารว่างพร้อมขาย" (ระดับหน่วย/MAT)  =========
    ใช้ข้อมูลจากชีต "หน่วยว่าง" ชุดเดียวกับ tab หน่วยว่าง แต่กรองเฉพาะ
    สถานะ "ว่างพร้อมขาย" (ready_rent + ready_sale) เท่านั้น — เตรียมไว้
    สำหรับ join ผลสำรวจกายภาพจาก Google Sheet ด้วย MAT ในรอบถัดไป
@@ -3762,7 +3750,6 @@ let physicalTabInited = false;
 let phStatusFilter = null;
 let phDetailPage = 0;
 let phLastDetailRows = [];
-let chPhysicalDonut;
 let chSurveyDonut;
 let chRoomDonut, chAssetDonut, chWaterDonut, chElecDonut;
 sortState.summaryPhysical = { key:'total', dir:-1 };
@@ -3925,15 +3912,6 @@ function updateKpiPhysical(base){
 
 /* ---------- กราฟ ---------- */
 function initPhysicalCharts(){
-  const ctx = document.getElementById('chartPhysicalDonut').getContext('2d');
-  chPhysicalDonut = new Chart(ctx,{
-    type:'doughnut',
-    data:{labels:[],datasets:[{data:[],backgroundColor:PALETTE}]},
-    options:{
-      responsive:true,maintainAspectRatio:false,cutout:'62%',
-      plugins:{legend:{position:'bottom',labels:{boxWidth:12,font:{family:'Sarabun',size:11}}}}
-    }
-  });
   const ctx2 = document.getElementById('chartSurveyDonut').getContext('2d');
   chSurveyDonut = new Chart(ctx2,{
     type:'doughnut',
@@ -3961,18 +3939,7 @@ function initPhysicalCharts(){
   });
 }
 function updateChartsPhysical(rows){
-  const divs = uniqueSorted(rows.map(r=>r.div));
-  const divVals = divs.map(d=> rows.filter(r=>r.div===d).length);
-  chPhysicalDonut.data.labels = divs;
-  chPhysicalDonut.data.datasets[0].data = divVals;
-  chPhysicalDonut.update();
-
   const offices = uniqueSorted(rows.map(r=>r.office_name));
-  let officeAggPh = offices.map(o=>({
-    name: o.replace(/สำนักงาน/g,'').trim() || o,
-    val: rows.filter(r=>r.office_name===o).length
-  })).filter(o=>o.val>0).sort((a,b)=>b.val-a.val);
-  renderRankList('phRankOffice', officeAggPh);
 
   const projMap = {};
   rows.forEach(r=>{
@@ -4115,12 +4082,6 @@ function getPhysicalDetailColumns(){
     ['water_meter','มิเตอร์น้ำ','str',false],
     ['elec_meter','มิเตอร์ไฟ','str',false],
     ['remark_survey','หมายเหตุ (สำรวจ)','str',false],
-    ['contract_status','CONTRACT_STATUS','str',false],
-    ['end_guarantee_date','สิ้นสุดค้ำประกัน','str',false],
-    ['redate','วันที่ซื้อคืน','str',false],
-    ['datek','จำนวนวันซื้อคืน','num',false],
-    ['stock_rmk','หมายเหตุ','str',false],
-    ['ref_no','อ้างถึง','str',false]
   ];
 }
 function getPhysicalDetailCellValue(r, key){
@@ -4202,7 +4163,7 @@ function buildSummaryReportHTMLPhysical(rows){
 
   const dateStr = new Date().toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'});
   const meta = `วันที่ออกรายงาน: ${dateStr}<br>ตัวกรองที่ใช้: ${escapeHtml(currentFilterTextPhysical())}<br>โครงการในรายงาน: ${allProjects.length.toLocaleString('th-TH')} โครงการ ใน ${groups.length} กอง`;
-  const body = `<h2>ตารางสรุปสภาพภาพอาคารว่างพร้อมขาย รายกอง / โครงการ</h2>
+  const body = `<h2>ตารางสรุปสภาพอาคารว่างพร้อมขาย รายกอง / โครงการ</h2>
   <table>
     <thead><tr>${theadHtml}</tr></thead>
     <tbody>${bodyHtml}</tbody>
@@ -4213,7 +4174,7 @@ function buildSummaryReportHTMLPhysical(rows){
       ${statusKeys.map(k=>`<td>${fmt(rows.filter(r=>r.status===k).length)}</td>`).join('')}
     </tr></tfoot>
   </table>`;
-  return reportShell('รายงานตารางสรุปสภาพภาพอาคารว่างพร้อมขาย', meta, body,
+  return reportShell('รายงานตารางสรุปสภาพอาคารว่างพร้อมขาย', meta, body,
     'รายงานสร้างจากแดชบอร์ดหน่วยความรับผิดชอบ กคช. — คลิกปุ่ม “พิมพ์ / บันทึกเป็น PDF” ด้านบนเพื่อบันทึกไฟล์');
 }
 function buildDetailReportHTMLPhysical(rows){
@@ -4235,9 +4196,9 @@ function buildDetailReportHTMLPhysical(rows){
   }).join('');
   const dateStr = new Date().toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'});
   const meta = `วันที่ออกรายงาน: ${dateStr}<br>ตัวกรองที่ใช้: ${escapeHtml(currentFilterTextPhysical())}<br>จำนวนหน่วยในรายงาน: ${list.length.toLocaleString('th-TH')} หน่วย`;
-  const body = `<h2>ตารางรายละเอียดสภาพภาพอาคารว่างพร้อมขาย (${list.length.toLocaleString('th-TH')} หน่วย)</h2>
+  const body = `<h2>ตารางรายละเอียดสภาพอาคารว่างพร้อมขาย (${list.length.toLocaleString('th-TH')} หน่วย)</h2>
   <table><thead><tr>${theadHtml}</tr></thead><tbody>${rowsHtml}</tbody></table>`;
-  return reportShell('รายงานตารางรายละเอียดสภาพภาพอาคารว่างพร้อมขาย', meta, body,
+  return reportShell('รายงานตารางรายละเอียดสภาพอาคารว่างพร้อมขาย', meta, body,
     'รายงานสร้างจากแดชบอร์ดหน่วยความรับผิดชอบ กคช. — คลิกปุ่ม “พิมพ์ / บันทึกเป็น PDF” ด้านบนเพื่อบันทึกไฟล์');
 }
 
@@ -4310,7 +4271,7 @@ function exportSummaryExcelPhysical(){
   const ws = XLSX.utils.json_to_sheet(data);
   XLSX.utils.book_append_sheet(wb, ws, 'สรุปกายภาพพร้อมขาย');
   const dateStr = new Date().toISOString().slice(0,10);
-  XLSX.writeFile(wb, `ตารางสรุปสภาพภาพอาคารว่างพร้อมขาย_${dateStr}.xlsx`);
+  XLSX.writeFile(wb, `ตารางสรุปสภาพอาคารว่างพร้อมขาย_${dateStr}.xlsx`);
 }
 function exportDetailExcelPhysical(){
   const cols = getPhysicalDetailColumns();
@@ -4323,7 +4284,7 @@ function exportDetailExcelPhysical(){
   const ws = XLSX.utils.json_to_sheet(data);
   XLSX.utils.book_append_sheet(wb, ws, 'รายละเอียดกายภาพพร้อมขาย');
   const dateStr = new Date().toISOString().slice(0,10);
-  XLSX.writeFile(wb, `ตารางรายละเอียดสภาพภาพอาคารว่างพร้อมขาย_${dateStr}.xlsx`);
+  XLSX.writeFile(wb, `ตารางรายละเอียดสภาพอาคารว่างพร้อมขาย_${dateStr}.xlsx`);
 }
 
 /* ---------- Master refresh + init (lazy) ---------- */
