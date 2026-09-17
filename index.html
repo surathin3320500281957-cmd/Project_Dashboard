@@ -118,6 +118,17 @@
   .btn-form{background:#0D9488;border-color:#0D9488;color:#fff;}
   .btn-form:hover{background:#0B7A70;}
   .btn-ghost{border-color:transparent;color:var(--slate);}
+  .btn-reset{color:#fff!important;border:none!important;font-weight:700;}
+  .btn-reset-overview{background:#2E5BFF;}
+  .btn-reset-overview:hover{background:#1B3FCC;}
+  .btn-reset-active{background:#0EA5A0;}
+  .btn-reset-active:hover{background:#0B7A76;}
+  .btn-reset-vacant{background:#B97D00;}
+  .btn-reset-vacant:hover{background:#8A5A00;}
+  .btn-reset-change{background:#6366F1;}
+  .btn-reset-change:hover{background:#4338CA;}
+  .btn-reset-physical{background:#16A34A;}
+  .btn-reset-physical:hover{background:#0F5A28;}
   .btn-ghost:hover{background:var(--line-soft);}
   .result-count{font-size:13px;color:var(--slate);white-space:nowrap;}
   .result-count b{color:var(--ink);}
@@ -572,7 +583,7 @@
     </div>
     <div class="filter-spacer"></div>
     <span class="result-count" id="resultCount"></span>
-    <button class="btn btn-ghost" id="btnReset">ล้างตัวกรอง</button>
+    <button class="btn btn-reset btn-reset-overview" id="btnReset">ล้างตัวกรอง</button>
   </div>
   <div class="chip-bar" id="chipBar"></div>
 </div>
@@ -720,7 +731,7 @@
       </div>
       <div class="filter-spacer"></div>
       <span class="result-count" id="aResultCount"></span>
-      <button class="btn btn-ghost" id="aBtnReset">ล้างตัวกรอง</button>
+      <button class="btn btn-reset btn-reset-active" id="aBtnReset">ล้างตัวกรอง</button>
     </div>
     <div class="chip-bar" id="aChipBar"></div>
   </div>
@@ -864,7 +875,7 @@
       </div>
       <div class="filter-spacer"></div>
       <span class="result-count" id="wResultCount"></span>
-      <button class="btn btn-ghost" id="wBtnReset">ล้างตัวกรอง</button>
+      <button class="btn btn-reset btn-reset-vacant" id="wBtnReset">ล้างตัวกรอง</button>
     </div>
     <div class="chip-bar" id="wChipBar"></div>
   </div>
@@ -993,7 +1004,7 @@
       </div>
       <div class="filter-spacer"></div>
       <span class="result-count" id="chResultCount"></span>
-      <button class="btn btn-ghost" id="chBtnReset">ล้างตัวกรอง</button>
+      <button class="btn btn-reset btn-reset-change" id="chBtnReset">ล้างตัวกรอง</button>
     </div>
     <div class="chip-bar" id="chChipBar"></div>
   </div>
@@ -1137,7 +1148,7 @@
       </div>
       <div class="filter-spacer"></div>
       <span class="result-count" id="phResultCount"></span>
-      <button class="btn btn-ghost" id="phBtnReset">ล้างตัวกรอง</button>
+      <button class="btn btn-reset btn-reset-physical" id="phBtnReset">ล้างตัวกรอง</button>
     </div>
     <div class="chip-bar" id="phChipBar"></div>
   </div>
