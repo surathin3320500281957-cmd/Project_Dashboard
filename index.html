@@ -121,6 +121,48 @@
     background:#E0F2FE;color:#0369A1;text-decoration:none;white-space:nowrap;
   }
   .photo-link:hover{background:#BAE6FD;}
+  .split-layout{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(280px,1fr);gap:16px;align-items:start;}
+  @media (max-width:1000px){ .split-layout{grid-template-columns:1fr;} }
+  .split-left{min-width:0;}
+  .split-right{
+    position:sticky;top:170px;max-height:calc(100vh - 190px);overflow-y:auto;
+    padding:18px;
+  }
+  .photo-panel-empty{
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    text-align:center;color:var(--slate-light);font-size:13.5px;padding:48px 12px;
+  }
+  .photo-panel-header{margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--line);}
+  .photo-panel-header .mat{font-size:13px;font-weight:700;color:var(--ink);}
+  .photo-panel-header .sub{font-size:12.5px;color:var(--slate-light);margin-top:2px;}
+  .photo-panel-badges{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;}
+  .photo-panel-badges span{
+    font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:999px;background:var(--paper);color:var(--ink);
+  }
+  .photo-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;}
+  .photo-grid .ph-item{
+    position:relative;border-radius:10px;overflow:hidden;background:var(--paper);
+    border:1px solid var(--line);aspect-ratio:1/1;
+  }
+  .photo-grid .ph-item img{width:100%;height:100%;object-fit:cover;display:block;cursor:pointer;}
+  .photo-grid .ph-item .ph-fail{
+    display:none;position:absolute;inset:0;align-items:center;justify-content:center;
+    flex-direction:column;font-size:11px;color:var(--slate-light);text-align:center;padding:6px;background:var(--paper);
+  }
+  .photo-grid .ph-item .ph-fail a{color:var(--primary);font-weight:700;}
+  .photo-panel-noimg{
+    text-align:center;color:var(--slate-light);font-size:13px;padding:24px 8px;
+    background:var(--paper);border-radius:10px;margin-top:8px;
+  }
+  .lightbox-overlay{
+    display:none;position:fixed;inset:0;background:rgba(10,12,24,0.85);z-index:200;
+    align-items:center;justify-content:center;padding:24px;cursor:zoom-out;
+  }
+  .lightbox-overlay.show{display:flex;}
+  .lightbox-overlay img{max-width:92vw;max-height:88vh;border-radius:8px;box-shadow:0 8px 40px rgba(0,0,0,0.5);}
+  #phDetailBody tr{cursor:pointer;}
+  #phDetailBody tr:hover{background:var(--primary-tint);}
+  #phDetailBody tr.row-selected{background:#DCFCE7!important;}
   .btn-form:hover{background:#0B7A70;}
   .btn-ghost{border-color:transparent;color:var(--slate);}
   .btn-reset{color:#fff!important;border:none!important;font-weight:700;}
@@ -1223,32 +1265,43 @@
     <section>
       <div class="section-head">
         <h2 class="section-title"><span class="n"></span>ตารางรายละเอียดหน่วย (ระดับ MAT)</h2>
-        <span class="section-sub">1 แถว = 1 หน่วยว่างพร้อมขาย — คอลัมน์สำรวจกายภาพจะเพิ่มเข้ามาเมื่อได้ข้อมูลจาก Google Sheet</span>
+        <span class="section-sub">1 แถว = 1 หน่วยว่าง — คลิกที่แถวเพื่อดูรูปภาพสำรวจของหน่วยนั้นทางขวา</span>
       </div>
-      <div class="table-card">
-        <div class="table-toolbar no-print">
-          <span class="result-count" id="phDetailCount"></span>
-          <div style="display:flex;gap:8px;">
-            <button class="btn btn-pdf" id="phBtnDetailPdf">📄 ส่งออก PDF</button>
-            <button class="btn btn-excel" id="phBtnDetailExcel">📊 ส่งออก Excel</button>
-            <button class="btn btn-form" id="phBtnBlankForm">📋 พิมพ์แบบฟอร์มเปล่า (สำรวจภาคสนาม)</button>
+      <div class="split-layout">
+        <div class="table-card split-left">
+          <div class="table-toolbar no-print">
+            <span class="result-count" id="phDetailCount"></span>
+            <div style="display:flex;gap:8px;">
+              <button class="btn btn-pdf" id="phBtnDetailPdf">📄 ส่งออก PDF</button>
+              <button class="btn btn-excel" id="phBtnDetailExcel">📊 ส่งออก Excel</button>
+              <button class="btn btn-form" id="phBtnBlankForm">📋 พิมพ์แบบฟอร์มเปล่า (สำรวจภาคสนาม)</button>
+            </div>
+          </div>
+          <div class="table-scroll">
+            <table id="phDetailTable">
+              <thead><tr id="phDetailHeadRow"></tr></thead>
+              <tbody id="phDetailBody"></tbody>
+            </table>
+          </div>
+          <div class="table-pager no-print">
+            <button class="btn btn-ghost" id="phDetailPrev">← ก่อนหน้า</button>
+            <span id="phDetailPagerInfo"></span>
+            <button class="btn btn-ghost" id="phDetailNext">ถัดไป →</button>
           </div>
         </div>
-        <div class="table-scroll">
-          <table id="phDetailTable">
-            <thead><tr id="phDetailHeadRow"></tr></thead>
-            <tbody id="phDetailBody"></tbody>
-          </table>
-        </div>
-        <div class="table-pager no-print">
-          <button class="btn btn-ghost" id="phDetailPrev">← ก่อนหน้า</button>
-          <span id="phDetailPagerInfo"></span>
-          <button class="btn btn-ghost" id="phDetailNext">ถัดไป →</button>
+        <div class="table-card split-right no-print" id="phPhotoPanel">
+          <div class="photo-panel-empty" id="phPhotoPanelEmpty">
+            <div style="font-size:32px;">🏠</div>
+            <div style="margin-top:8px;">คลิกแถวในตารางด้านซ้าย<br>เพื่อดูรูปภาพสำรวจของหน่วยนั้น</div>
+          </div>
+          <div class="photo-panel-content" id="phPhotoPanelContent" style="display:none;"></div>
         </div>
       </div>
     </section>
 
   </main>
+
+  <div class="lightbox-overlay no-print" id="phLightbox"><img id="phLightboxImg" src="" alt=""></div>
 
 </div>
 
@@ -3737,6 +3790,7 @@ let PHYSICAL_UNITS = null;
 let physicalTabInited = false;
 let phStatusFilter = null;
 let phDetailPage = 0;
+let selectedPhysicalMat = null;
 let phLastDetailRows = [];
 let chSurveyDonut;
 let chRoomDonut, chAssetDonut, chWaterDonut, chElecDonut;
@@ -4053,12 +4107,6 @@ function getPhysicalDetailColumns(){
     ['elec_meter','มิเตอร์ไฟ','str',false],
     ['remark_survey','หมายเหตุ (สำรวจ)','str',false],
     ['photo_count','จำนวนรูป','num',false],
-    ['link1','รูปที่ 1','link',false],
-    ['link2','รูปที่ 2','link',false],
-    ['link3','รูปที่ 3','link',false],
-    ['link4','รูปที่ 4','link',false],
-    ['link5','รูปที่ 5','link',false],
-    ['link6','รูปที่ 6','link',false],
   ];
 }
 function getPhysicalDetailCellValue(r, key){
@@ -4096,14 +4144,15 @@ function renderDetailPhysical(rows){
   body.innerHTML = pageRows.map(r=>{
     const cells = cols.map(([key,label,type,left])=>{
       const v = getPhysicalDetailCellValue(r, key);
-      if(type==='link'){
-        return v ? `<td><a href="${escapeHtml(v)}" target="_blank" rel="noopener" class="photo-link">🔗 เปิดรูป</a></td>` : `<td>—</td>`;
-      }
       const display = (v===''||v===undefined||v===null) ? '—' : escapeHtml(String(v));
       return `<td${left?' class="text-left"':''}>${display}</td>`;
     }).join('');
-    return `<tr>${cells}</tr>`;
+    const selCls = (selectedPhysicalMat===r.mat) ? ' class="row-selected"' : '';
+    return `<tr${selCls} data-mat="${escapeHtml(r.mat)}">${cells}</tr>`;
   }).join('');
+  body.querySelectorAll('tr').forEach(tr=>{
+    tr.addEventListener('click', ()=> selectPhysicalUnit(tr.getAttribute('data-mat')));
+  });
   document.getElementById('phDetailCount').innerHTML = `พบ <b>${list.length.toLocaleString('th-TH')}</b> หน่วย`;
 
   const showFrom = list.length ? startIdx+1 : 0;
@@ -4115,6 +4164,70 @@ function renderDetailPhysical(rows){
   if(prevBtn) prevBtn.disabled = phDetailPage<=0;
   if(nextBtn) nextBtn.disabled = phDetailPage>=totalPages-1;
 }
+
+/* ---------- พาเนลรูปภาพ (ฝั่งขวา) — เลือกแถวในตารางซ้ายแล้วโหลดรูปมาโชว์ ---------- */
+function selectPhysicalUnit(mat){
+  selectedPhysicalMat = (selectedPhysicalMat===mat) ? null : mat; // คลิกซ้ำแถวเดิม = ยกเลิกเลือก
+  // ไฮไลต์แถวที่เลือกโดยไม่ต้อง re-render ตารางทั้งหมด
+  document.querySelectorAll('#phDetailBody tr').forEach(tr=>{
+    tr.classList.toggle('row-selected', tr.getAttribute('data-mat')===selectedPhysicalMat);
+  });
+  renderPhotoPanel();
+}
+function renderPhotoPanel(){
+  const emptyEl = document.getElementById('phPhotoPanelEmpty');
+  const contentEl = document.getElementById('phPhotoPanelContent');
+  if(!selectedPhysicalMat){
+    emptyEl.style.display = 'flex';
+    contentEl.style.display = 'none';
+    return;
+  }
+  const unit = (PHYSICAL_UNITS||[]).find(u=>u.mat===selectedPhysicalMat);
+  if(!unit){ emptyEl.style.display='flex'; contentEl.style.display='none'; return; }
+
+  const links = [unit.link1,unit.link2,unit.link3,unit.link4,unit.link5,unit.link6].filter(Boolean);
+  const badges = [
+    unit.survey_status_label,
+    unit.room_condition && `สภาพห้อง: ${unit.room_condition}`,
+    unit.asset && `ทรัพย์สิน: ${unit.asset}`,
+    unit.water_meter && `มิเตอร์น้ำ: ${unit.water_meter}`,
+    unit.elec_meter && `มิเตอร์ไฟ: ${unit.elec_meter}`
+  ].filter(Boolean);
+
+  const photoGridHtml = links.length ? `<div class="photo-grid">${links.map((link,i)=>{
+    const idMatch = link.match(/\/d\/([^/]+)/);
+    const fileId = idMatch ? idMatch[1] : null;
+    const thumbUrl = fileId ? `https://drive.google.com/thumbnail?id=${fileId}&sz=w800` : '';
+    return `<div class="ph-item">
+      <img src="${escapeHtml(thumbUrl)}" alt="รูปที่ ${i+1}" loading="lazy"
+           onclick="openLightbox('${escapeHtml(thumbUrl)}')"
+           onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+      <div class="ph-fail"><span>โหลดรูปไม่ขึ้น</span><a href="${escapeHtml(link)}" target="_blank" rel="noopener">เปิดจาก Drive</a></div>
+    </div>`;
+  }).join('')}</div>`
+  : `<div class="photo-panel-noimg">📷 หน่วยนี้ยังไม่มีรูปภาพแนบ</div>`;
+
+  contentEl.innerHTML = `
+    <div class="photo-panel-header">
+      <div class="mat">${escapeHtml(unit.mat)}</div>
+      <div class="sub">${escapeHtml(unit.proj_name)} · บ้านเลขที่ ${escapeHtml(unit.house_no||'—')}</div>
+      <div class="photo-panel-badges">${badges.map(b=>`<span>${escapeHtml(b)}</span>`).join('')}</div>
+    </div>
+    ${photoGridHtml}
+    ${unit.remark_survey ? `<div class="photo-panel-noimg" style="margin-top:10px;text-align:left;">📝 ${escapeHtml(unit.remark_survey)}</div>` : ''}
+  `;
+  emptyEl.style.display = 'none';
+  contentEl.style.display = 'block';
+}
+function openLightbox(url){
+  if(!url) return;
+  document.getElementById('phLightboxImg').src = url;
+  document.getElementById('phLightbox').classList.add('show');
+}
+document.getElementById('phLightbox').addEventListener('click', ()=>{
+  document.getElementById('phLightbox').classList.remove('show');
+  document.getElementById('phLightboxImg').src = '';
+});
 
 /* ---------- Export: PDF + Excel ---------- */
 function buildSummaryReportHTMLPhysical(rows){
