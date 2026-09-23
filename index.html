@@ -116,6 +116,8 @@
   .btn-excel{background:var(--green);border-color:var(--green);color:#fff;}
   .btn-excel:hover{background:#16A34A;}
   .btn-form{background:#0D9488;border-color:#0D9488;color:#fff;}
+  .btn-history{background:#7C3AED;border-color:#7C3AED;color:#fff;}
+  .btn-history:hover{background:#6023C0;}
   .photo-link{
     display:inline-block;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:700;
     background:#E0F2FE;color:#0369A1;text-decoration:none;white-space:nowrap;
@@ -1293,6 +1295,7 @@
               <button class="btn btn-pdf" id="phBtnDetailPdf">📄 ส่งออก PDF</button>
               <button class="btn btn-excel" id="phBtnDetailExcel">📊 ส่งออก Excel</button>
               <button class="btn btn-form" id="phBtnBlankForm">📋 พิมพ์แบบฟอร์มเปล่า (สำรวจภาคสนาม)</button>
+              <button class="btn btn-history" id="phBtnHistoryPdf">🗂️ ส่งออก PDF ประวัติ (รายหน่วย)</button>
             </div>
           </div>
           <div class="table-scroll">
@@ -4375,6 +4378,103 @@ function exportSingleUnitPdf(mat){
   openReportTab(buildSingleUnitReportHTML(unit));
 }
 
+/* ---------- ประวัติหน่วยว่างแบบ "รายหน่วย" (หน่วยละหน้า) — ตามตัวกรองปัจจุบัน ---------- */
+function buildUnitCardBodyHTML(unit){
+  const cols = getPhysicalDetailColumns().filter(([k])=>k!=='photo_count');
+  const infoRowsHtml = cols.map(([k,label])=>{
+    const v = getPhysicalDetailCellValue(unit, k);
+    const display = (v===''||v===undefined||v===null) ? '—' : escapeHtml(String(v));
+    return `<tr><td style="text-align:left;font-weight:700;background:#EEF1F8;width:150px;">${escapeHtml(label)}</td><td style="text-align:left;">${display}</td></tr>`;
+  }).join('');
+  const links = [unit.link1,unit.link2,unit.link3,unit.link4,unit.link5,unit.link6].filter(Boolean);
+  const photosHtml = links.length ? `
+    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;">
+      ${links.map((link,i)=>{
+        const idMatch = link.match(/\/d\/([^/]+)/);
+        const fileId = idMatch ? idMatch[1] : null;
+        const thumbUrl = fileId ? `https://drive.google.com/thumbnail?id=${fileId}&sz=w800` : '';
+        return `<div style="border:1px solid #DDE2EE;border-radius:8px;overflow:hidden;">
+          <img src="${escapeHtml(thumbUrl)}" style="width:100%;height:150px;object-fit:cover;display:block;" alt="รูปที่ ${i+1}">
+          <div style="padding:4px 8px;font-size:11px;color:#5B6480;">รูปที่ ${i+1}</div>
+        </div>`;
+      }).join('')}
+    </div>` : `<div style="color:#5B6480;">📷 หน่วยนี้ยังไม่มีรูปภาพแนบ</div>`;
+  return `
+    <div style="display:flex;gap:20px;align-items:flex-start;">
+      <div style="flex:1;min-width:0;">
+        <h2>ข้อมูลหน่วย</h2>
+        <table>${infoRowsHtml}</table>
+      </div>
+      <div style="flex:1.15;min-width:0;">
+        <h2>รูปภาพประกอบ${links.length?` (${links.length} รูป)`:''}</h2>
+        ${photosHtml}
+      </div>
+    </div>`;
+}
+function buildHistoryReportHTMLPhysical(rows){
+  const dateStr = new Date().toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'});
+  const unitsHtml = rows.map((unit,i)=>`
+    <div class="unit-card"${i>0?' style="page-break-before:always;"':''}>
+      <h1 style="font-size:16px;margin-bottom:2px;">${escapeHtml(unit.mat)}</h1>
+      <div class="meta" style="margin-bottom:10px;">ประวัติ ณ ${dateStr} · ${escapeHtml(unit.proj_name)} · บ้านเลขที่ ${escapeHtml(unit.house_no||'—')}</div>
+      ${buildUnitCardBodyHTML(unit)}
+    </div>`).join('');
+
+  const filterDesc = escapeHtml(currentFilterTextPhysical());
+  return `<!DOCTYPE html>
+<html lang="th"><head><meta charset="UTF-8">
+<title>ประวัติหน่วยว่าง (รายหน่วย)</title>
+<style>
+  @page { size: A4 landscape; margin: 14mm; }
+  *{box-sizing:border-box;}
+  body{font-family:'Sarabun','Tahoma',sans-serif;color:#161B2E;margin:0;padding:24px;font-size:12px;background:#fff;}
+  h1{font-size:19px;margin:0 0 4px;}
+  .meta{font-size:11.5px;color:#5B6480;margin-bottom:10px;line-height:1.7;}
+  h2{font-size:14px;margin:12px 0 8px;border-left:4px solid #2E5BFF;padding-left:8px;}
+  table{width:100%;border-collapse:collapse;margin-bottom:6px;}
+  th,td{border:1px solid #DDE2EE;padding:5px 8px;text-align:right;font-size:11.5px;vertical-align:top;}
+  th{background:#EEF1F8;color:#28304D;font-weight:700;}
+  .print-btn{margin-bottom:8px;padding:9px 18px;font-family:'Sarabun','Tahoma',sans-serif;font-size:13.5px;font-weight:600;border-radius:5px;border:none;background:#AE4636;color:#fff;cursor:pointer;}
+  .print-btn:hover:not(:disabled){background:#8F3A2D;}
+  .print-btn:disabled{opacity:0.45;cursor:not-allowed;}
+  .load-status{margin-bottom:14px;padding:10px 16px;border-radius:8px;background:#FFF7E6;border:1px solid #FFD98E;color:#7A4E00;font-size:13px;font-weight:700;}
+  .load-status.done{background:#E7F8EE;border-color:#8FE0B0;color:#0F5A28;}
+  @media print { .no-print{display:none;} }
+</style></head>
+<body>
+  <button class="no-print print-btn" id="printBtn" disabled onclick="window.print()">🖨 พิมพ์ / บันทึกเป็น PDF (รอโหลดรูปให้ครบก่อน)</button>
+  <div class="no-print load-status" id="loadStatus">⏳ กำลังเตรียมรูปภาพ...</div>
+  <h1 class="no-print">ประวัติหน่วยว่าง (รายหน่วย)</h1>
+  <div class="meta no-print">วันที่ออกรายงาน: ${dateStr}<br>ตัวกรองที่ใช้: ${filterDesc}<br>จำนวนหน่วยในรายงาน: ${rows.length.toLocaleString('th-TH')} หน่วย (${rows.length.toLocaleString('th-TH')} หน้า)</div>
+  ${unitsHtml}
+<script>
+  var imgs = document.querySelectorAll('img');
+  var total = imgs.length, loaded = 0;
+  var statusEl = document.getElementById('loadStatus');
+  var btn = document.getElementById('printBtn');
+  function ready(){
+    statusEl.textContent = '✅ โหลดรูปครบแล้ว (' + total + ' รูป) พร้อมพิมพ์ได้เลย — รูปที่ขึ้น "โหลดไม่ขึ้น" จะไม่แสดงในไฟล์ PDF ที่ได้';
+    statusEl.classList.add('done');
+    btn.disabled = false;
+    btn.textContent = '🖨 พิมพ์ / บันทึกเป็น PDF';
+  }
+  if(total === 0){
+    ready();
+  } else {
+    function tick(){
+      loaded++;
+      statusEl.textContent = '⏳ กำลังโหลดรูปภาพ... ' + loaded + ' / ' + total;
+      if(loaded >= total) ready();
+    }
+    imgs.forEach(function(img){
+      if(img.complete) tick();
+      else { img.addEventListener('load', tick); img.addEventListener('error', tick); }
+    });
+  }
+<\/script>
+</body></html>`;
+}
+
 /* ---------- แบบฟอร์มตรวจอาคารว่างพร้อมขายด้านกายภาพ (กระดาษเปล่า สำหรับถือเดินสำรวจ) ----------
    ใส่ข้อมูลระบุหน่วยที่รู้อยู่แล้ว (กอง/สำนักงาน/โครงการ/MAT/บ้านเลขที่/สถานะ) ไว้ล่วงหน้า
    ส่วนคอลัมน์ที่ต้องไปตรวจหน้างาน (สภาพห้อง/ทรัพย์สิน/มิเตอร์น้ำ/มิเตอร์ไฟ) เว้นว่างเป็นวงกลม ○
@@ -4501,6 +4601,12 @@ async function initPhysicalTab(){
   document.getElementById('phBtnDetailPdf').addEventListener('click', ()=> openReportTab(buildDetailReportHTMLPhysical(getPhysicalRows())));
   document.getElementById('phBtnDetailExcel').addEventListener('click', exportDetailExcelPhysical);
   document.getElementById('phBtnBlankForm').addEventListener('click', ()=> openReportTab(buildBlankSurveyFormHTML(getPhysicalRows())));
+  document.getElementById('phBtnHistoryPdf').addEventListener('click', ()=>{
+    const rows = getPhysicalRows();
+    if(rows.length === 0){ alert('ไม่มีหน่วยในตัวกรองปัจจุบัน'); return; }
+    if(rows.length > 150 && !confirm(`กำลังจะสร้างรายงานประวัติ ${rows.length.toLocaleString('th-TH')} หน่วย (หน่วยละ 1 หน้า) อาจใช้เวลาโหลดรูปนาน แนะนำให้กรองข้อมูลให้แคบลงก่อน (เช่น เลือกทีละสำนักงาน/โครงการ)\n\nต้องการดำเนินการต่อหรือไม่?`)) return;
+    openReportTab(buildHistoryReportHTMLPhysical(rows));
+  });
   refreshPhysical();
 }
 
