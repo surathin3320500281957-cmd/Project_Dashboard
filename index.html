@@ -1200,6 +1200,10 @@
         <select id="phSurveyStatus" class="f-select"><option value="">ทั้งหมด</option></select>
       </div>
       <div class="filter-group">
+        <label for="phHasPhoto">รูปภาพ</label>
+        <select id="phHasPhoto" class="f-select"><option value="">ทั้งหมด</option></select>
+      </div>
+      <div class="filter-group">
         <label for="phSearch">ค้นหา</label>
         <input id="phSearch" class="f-search" type="text" placeholder="ชื่อโครงการ / รหัส / MAT / บ้านเลขที่">
       </div>
@@ -1502,6 +1506,7 @@ const FILTER_META = {
   fPayFr:    {label:'PAY_FR',               color:'#EA580C'},
   fOldStatus:{label:'สถานะเดิม (ว่าง)',      color:'#9333EA'},
   fSurveyStatus:{label:'สถานะการสำรวจ',      color:'#059669'},
+  fHasPhoto:{label:'รูปภาพ',                color:'#0369A1'},
   fSearch:   {label:'ค้นหา',                color:'#5B6480'}
 };
 let sortState = { summary:{key:'units_total',dir:-1}, detail:{key:'no',dir:1} };
@@ -3791,13 +3796,13 @@ async function initVacantChangeTab(){
    ================================================================== */
 
 const PHYSICAL_STATUS_ORDER = ['ready_rent','notready_rent','ready_sale','notready_sale'];
-const physicalFilterIds = ['phDiv','phOffice','phProjName','phType','phIncome','phBuilding','phRedate','phRemark','phSurveyStatus'];
-const FILTER_FIELD_PH = {phDiv:'div', phOffice:'office_name', phProjName:'proj_name', phType:'proj_type', phIncome:'type_name', phBuilding:'building_char', phRedate:'redate_status', phRemark:'stock_rmk_display', phSurveyStatus:'survey_status_label'};
+const physicalFilterIds = ['phDiv','phOffice','phProjName','phType','phIncome','phBuilding','phRedate','phRemark','phSurveyStatus','phHasPhoto'];
+const FILTER_FIELD_PH = {phDiv:'div', phOffice:'office_name', phProjName:'proj_name', phType:'proj_type', phIncome:'type_name', phBuilding:'building_char', phRedate:'redate_status', phRemark:'stock_rmk_display', phSurveyStatus:'survey_status_label', phHasPhoto:'has_photo_label'};
 const FILTER_META_PH = {
   phDiv: FILTER_META.fDiv, phOffice: FILTER_META.fOffice, phProjName: FILTER_META.fProjName,
   phType: FILTER_META.fType, phIncome: FILTER_META.fIncome, phBuilding: FILTER_META.fBuilding,
   phRedate: FILTER_META.fRedate, phRemark: FILTER_META.fRemark, phSurveyStatus: FILTER_META.fSurveyStatus,
-  phSearch: FILTER_META.fSearch
+  phHasPhoto: FILTER_META.fHasPhoto, phSearch: FILTER_META.fSearch
 };
 
 let PHYSICAL_UNITS = null;
@@ -3846,7 +3851,8 @@ async function buildPhysicalUnits(){
       remark_survey: sv ? sv.remark_survey : '',
       house_no_survey: sv ? sv.house_no_survey : '',
       link1: links[0], link2: links[1], link3: links[2], link4: links[3], link5: links[4], link6: links[5],
-      photo_count: links.filter(Boolean).length
+      photo_count: links.filter(Boolean).length,
+      has_photo_label: links.filter(Boolean).length > 0 ? 'มี' : 'ไม่มี'
     };
   });
 }
@@ -3865,6 +3871,7 @@ function getPhysicalBase(excludeId){
     if(excludeId!=='phRedate' && vals.phRedate && r.redate_status!==vals.phRedate) return false;
     if(excludeId!=='phRemark' && vals.phRemark && r.stock_rmk_display!==vals.phRemark) return false;
     if(excludeId!=='phSurveyStatus' && vals.phSurveyStatus && r.survey_status_label!==vals.phSurveyStatus) return false;
+    if(excludeId!=='phHasPhoto' && vals.phHasPhoto && r.has_photo_label!==vals.phHasPhoto) return false;
     if(q){
       const hay = (r.proj_name+' '+r.proj_code+' '+r.mat+' '+r.house_no+' '+r.office_name).toLowerCase();
       if(!hay.includes(q)) return false;
