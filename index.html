@@ -139,7 +139,7 @@
     font-family:inherit;font-size:11.5px;font-weight:700;cursor:pointer;white-space:nowrap;
   }
   .btn-single-pdf:hover{background:#E23F44;}
-  .photo-panel-header .sub{font-size:12.5px;color:var(--slate-light);margin-top:2px;}
+  .photo-panel-header .sub{font-size:12.5px;color:#1B3FCC;font-weight:700;margin-top:2px;}
   .photo-panel-badges{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;}
   .photo-panel-badges span{
     font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:999px;background:var(--paper);color:var(--ink);
@@ -158,6 +158,10 @@
   .photo-panel-noimg{
     text-align:center;color:var(--slate-light);font-size:13px;padding:24px 8px;
     background:var(--paper);border-radius:10px;margin-top:8px;
+  }
+  .photo-panel-remark{
+    text-align:left;color:#1B3FCC;font-weight:700;font-size:12.5px;padding:10px 12px;
+    background:var(--paper);border-radius:10px;margin-top:10px;line-height:1.5;
   }
   .lightbox-overlay{
     display:none;position:fixed;inset:0;background:rgba(10,12,24,0.85);z-index:200;
@@ -4235,7 +4239,7 @@ function renderPhotoPanel(){
       <div class="photo-panel-badges">${badges.map(b=>`<span>${escapeHtml(b)}</span>`).join('')}</div>
     </div>
     ${photoGridHtml}
-    ${unit.remark_survey ? `<div class="photo-panel-noimg" style="margin-top:10px;text-align:left;">📝 ${escapeHtml(unit.remark_survey)}</div>` : ''}
+    ${unit.remark_survey ? `<div class="photo-panel-remark">📝 ${escapeHtml(unit.remark_survey)}</div>` : ''}
   `;
   emptyEl.style.display = 'none';
   contentEl.style.display = 'block';
@@ -4325,29 +4329,36 @@ function buildSingleUnitReportHTML(unit){
   const infoRowsHtml = cols.map(([k,label])=>{
     const v = getPhysicalDetailCellValue(unit, k);
     const display = (v===''||v===undefined||v===null) ? '—' : escapeHtml(String(v));
-    return `<tr><td style="text-align:left;font-weight:700;background:#EEF1F8;width:190px;">${escapeHtml(label)}</td><td style="text-align:left;">${display}</td></tr>`;
+    return `<tr><td style="text-align:left;font-weight:700;background:#EEF1F8;width:150px;">${escapeHtml(label)}</td><td style="text-align:left;">${display}</td></tr>`;
   }).join('');
 
   const links = [unit.link1,unit.link2,unit.link3,unit.link4,unit.link5,unit.link6].filter(Boolean);
   const photosHtml = links.length ? `
-    <h2>รูปภาพประกอบ (${links.length} รูป)</h2>
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
+    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;">
       ${links.map((link,i)=>{
         const idMatch = link.match(/\/d\/([^/]+)/);
         const fileId = idMatch ? idMatch[1] : null;
         const thumbUrl = fileId ? `https://drive.google.com/thumbnail?id=${fileId}&sz=w800` : '';
         return `<div style="border:1px solid #DDE2EE;border-radius:8px;overflow:hidden;">
-          <img src="${escapeHtml(thumbUrl)}" style="width:100%;height:170px;object-fit:cover;display:block;" alt="รูปที่ ${i+1}">
+          <img src="${escapeHtml(thumbUrl)}" style="width:100%;height:150px;object-fit:cover;display:block;" alt="รูปที่ ${i+1}">
           <div style="padding:4px 8px;font-size:11px;color:#5B6480;">รูปที่ ${i+1}</div>
         </div>`;
       }).join('')}
-    </div>` : `<h2>รูปภาพประกอบ</h2><div style="color:#5B6480;">📷 หน่วยนี้ยังไม่มีรูปภาพแนบ</div>`;
+    </div>` : `<div style="color:#5B6480;">📷 หน่วยนี้ยังไม่มีรูปภาพแนบ</div>`;
 
   const dateStr = new Date().toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'});
   const meta = `วันที่ออกรายงาน: ${dateStr}<br>MAT: ${escapeHtml(unit.mat)}`;
-  const body = `<h2>ข้อมูลหน่วย</h2>
-  <table>${infoRowsHtml}</table>
-  ${photosHtml}`;
+  const body = `
+  <div style="display:flex;gap:20px;align-items:flex-start;">
+    <div style="flex:1;min-width:0;">
+      <h2>ข้อมูลหน่วย</h2>
+      <table>${infoRowsHtml}</table>
+    </div>
+    <div style="flex:1.15;min-width:0;">
+      <h2>รูปภาพประกอบ${links.length?` (${links.length} รูป)`:''}</h2>
+      ${photosHtml}
+    </div>
+  </div>`;
   return reportShell(`รายงานหน่วย ${unit.mat}`, meta, body,
     'รายงานสร้างจากแดชบอร์ดหน่วยความรับผิดชอบ กคช. — คลิกปุ่ม “พิมพ์ / บันทึกเป็น PDF” ด้านบนเพื่อบันทึกไฟล์');
 }
