@@ -17,6 +17,13 @@ Output:
   - แทนที่ค่า DB64/PB64/CS64/PF64/VC64/CH64/SV64 ใน index.html ให้อัตโนมัติ
   - พิมพ์ผลตรวจสอบทุกขั้นตอนออกมาให้ไล่เช็คได้ (sum ตัวเลข, สมการอนุรักษ์ ฯลฯ)
 
+📌 นโยบายตัดแถวซ้ำ (เพิ่ม 25 พ.ย. 2569 — ข้อผิดพลาดจากฝั่ง IT ต้นทาง ผู้ใช้อนุมัติให้ตัดทิ้ง):
+   - ชีต "มีสัญญา": ตัดแถวที่ซ้ำกันทุกคอลัมน์ (เก็บแถวแรก)
+   - ชีต "หน่วยว่าง"/"หน่วยว่างเดิม": ตัด MAT ซ้ำ (เก็บแถวแรก)
+   - ยอดระดับโครงการ (DB64) ถูกปรับให้ตรงกับระดับหน่วยที่ตัดซ้ำแล้ว (STEP 3b) ดังนั้นยอดจะต่างจากชีต
+     "สรุปหน่วยเต็ม" ใน Excel เฉพาะโครงการที่มีแถวซ้ำ ถ้า IT แก้ต้นทางแล้ว ขั้นตอนนี้จะไม่ตัดอะไรเลย (✅ 0 แถว)
+   - ถ้ายอดระดับหน่วยต่างจาก Excel ในโครงการที่ "ไม่มี" แถวซ้ำ สคริปต์จะพิมพ์ ⚠️ ให้หยุดตรวจสอบ
+
 ⚠️ ก่อนรันทุกครั้ง: ตรวจสูตร COUNTIFS ในชีต "สรุปหน่วยเต็ม" ก่อนว่าเปลี่ยนไหม
    ถ้าเปลี่ยน ต้องแก้เงื่อนไขในส่วน STEP 2/3 ของสคริปต์นี้ให้ตรงก่อนรัน
 ============================================================================
@@ -88,6 +95,9 @@ print('\n[2/7] หน่วย Active (มีสัญญา/เช่าเห�
 active_records = []
 extra_cs = []
 orphans = Counter()
+seen_contract_rows = set()   # ตัดแถวที่ซ้ำกันทุกคอลัมน์ในชีต "มีสัญญา" (ข้อผิดพลาดต้นทาง)
+contract_rows = list(wb['มีสัญญา'].iter_rows(values_only=True))
+dup_contract = Counter()     # โครงการ -> จำนวนแถวที่ตัด
 
 # --- มีสัญญา: D=PROJ(4), L=MAT(12), N=HOUSE_NO_ACT(14), O=CONTRACT_TYPE_CODE(15), Y=CUST_STATUS_NAME(25)
 ws = wb['มีสัญญา']
@@ -109,6 +119,11 @@ for row in range(2, ws.max_row+1):
     if proj not in valid_proj:
         orphans[proj] += 1
         continue
+    rowkey = contract_rows[row-1]   # ทั้งแถว (อ่านครั้งเดียวด้วย iter_rows เพื่อความเร็ว)
+    if rowkey in seen_contract_rows:
+        dup_contract[proj] += 1
+        continue
+    seen_contract_rows.add(rowkey)
     active_records.append({'proj_code':proj,'source':'C','mat':mat,'house_no':house,'status':status,'ref_status':y or ''})
     extra_cs.append([mat, y or '', o])
     cnt_by_status[status] += 1
@@ -155,7 +170,7 @@ for row in range(2, ws.max_row+1):
 print('  เช่าซื้อรอโอน matched:', dict(cnt3))
 
 status_sum = Counter(r['status'] for r in active_records)
-print('  TOTAL active records:', len(active_records), '| ต้องตรงกับ Sum active_total ด้านบน')
+print('  TOTAL active records (หลังตัดแถวซ้ำ):', len(active_records), '| เทียบกับ Excel ดูผลที่ STEP 3b')
 print('  Orphan proj_codes (ไม่อยู่ใน 185 โครงการ ถูกตัดออก):', dict(orphans))
 
 # ============================================================================
@@ -176,6 +191,7 @@ def extract_vacant_sheet(sheet_name, check_valid=True):
         ('ว่างพร้อมขาย','เช่าซื้อ'):'ready_sale', ('ว่างไม่พร้อมขาย','เช่าซื้อ'):'notready_sale',
     }
     records, orphan_ct = [], 0
+    seen_mats, dup_by_proj = set(), Counter()   # ตัด MAT ซ้ำ (ข้อผิดพลาดต้นทาง) เก็บแถวแรก
     for row in range(2, ws.max_row+1):
         proj = ws.cell(row=row, column=col_proj).value
         if proj is None: continue
@@ -185,6 +201,11 @@ def extract_vacant_sheet(sheet_name, check_valid=True):
         if check_valid and proj not in valid_proj:
             orphan_ct += 1
             continue
+        _mat = ws.cell(row=row, column=col_mat).value
+        if _mat is not None and _mat in seen_mats:
+            dup_by_proj[proj] += 1
+            continue
+        seen_mats.add(_mat)
         records.append({
             'proj_code': proj, 'mat': ws.cell(row=row, column=col_mat).value or '',
             'sub_model_name': ws.cell(row=row, column=col_submodel).value or '',
@@ -198,13 +219,13 @@ def extract_vacant_sheet(sheet_name, check_valid=True):
             'stock_rmk': ws.cell(row=row, column=col_bf).value or '',
             'ref_no': ws.cell(row=row, column=col_bg).value or '',
         })
-    return records, orphan_ct
+    return records, orphan_ct, dup_by_proj
 
-vacant_new, orph1 = extract_vacant_sheet('หน่วยว่าง', check_valid=True)
-print('  New vacant matched:', len(vacant_new), '| orphans:', orph1, '| ต้องตรงกับ Sum vacant_total ด้านบน')
+vacant_new, orph1, dup_new = extract_vacant_sheet('หน่วยว่าง', check_valid=True)
+print('  New vacant matched (หลังตัด MAT ซ้ำ):', len(vacant_new), '| orphans:', orph1, '| เทียบกับ Excel ดูผลที่ STEP 3b')
 print('  By bucket:', dict(Counter(r['status'] for r in vacant_new)))
 
-vacant_old, orph2 = extract_vacant_sheet('หน่วยว่างเดิม', check_valid=False)
+vacant_old, orph2, dup_old = extract_vacant_sheet('หน่วยว่างเดิม', check_valid=False)
 print('  Old vacant (หน่วยว่างเดิม) total (ไม่กรองโครงการ):', len(vacant_old))
 print('  By bucket:', dict(Counter(r['status'] for r in vacant_old)))
 
@@ -213,6 +234,46 @@ lease_whole_mats = set(r['mat'] for r in active_records if r['source']=='L')
 vacant_mats = set(r['mat'] for r in vacant_new)
 dup_mats = vacant_mats & lease_whole_mats
 print(f'  MAT ซ้ำระหว่างหน่วยว่าง-เช่าเหมา: {len(dup_mats)}', '⚠️ ควรเป็น 0!' if dup_mats else '✅')
+
+# ============================================================================
+# STEP 3b: ตัดแถวซ้ำจากต้นทาง + ปรับยอดระดับโครงการ (DB64) ให้ตรงกับระดับหน่วย
+# ============================================================================
+print('\n[3b/7] ตัดแถวซ้ำจากต้นทาง + กระทบยอดระดับโครงการกับระดับหน่วย')
+dup_projects = set(dup_contract) | set(dup_new)
+print('  ตัดแถวซ้ำ "มีสัญญา" (ซ้ำทุกคอลัมน์):', sum(dup_contract.values()), 'แถว', dict(dup_contract), '' if dup_contract else '✅')
+print('  ตัดแถวซ้ำ "หน่วยว่าง" (MAT ซ้ำ):', sum(dup_new.values()), 'แถว', dict(dup_new), '' if dup_new else '✅')
+print('  ตัดแถวซ้ำ "หน่วยว่างเดิม" (MAT ซ้ำ):', sum(dup_old.values()), 'แถว', dict(dup_old), '' if dup_old else '✅')
+FIELD_BY_STATUS = {
+    'rent':'units_rent','lease_whole':'units_lease_whole','hire_purchase':'units_hire_purchase',
+    'pending_sale':'units_pending_sale','guarantee':'units_guarantee','pending_transfer':'units_pending_transfer',
+    'ready_rent':'vacant_ready_rent','notready_rent':'vacant_notready_rent',
+    'ready_sale':'vacant_ready_sale','notready_sale':'vacant_notready_sale',
+}
+unit_counts = Counter((r['proj_code'], r['status']) for r in active_records)
+unit_counts.update(Counter((r['proj_code'], r['status']) for r in vacant_new))
+changed = {}
+for rec in raw_rows:
+    for status, field in FIELD_BY_STATUS.items():
+        new_v = unit_counts.get((rec['proj_code'], status), 0)
+        if new_v != rec[field]:
+            changed.setdefault(rec['proj_code'], []).append((field, rec[field], new_v))
+unexpected = [p for p in changed if p not in dup_projects]
+for p, items in changed.items():
+    print(f'  ปรับ {p}:', ', '.join(f'{f} {o}→{n}' for f, o, n in items), '' if p in dup_projects else '⚠️ ไม่ได้มาจากแถวซ้ำ — ไม่ปรับ ให้ตรวจสอบ')
+for rec in raw_rows:
+    if rec['proj_code'] in dup_projects and rec['proj_code'] in changed:
+        delta = 0
+        for field, old_v, new_v in changed[rec['proj_code']]:
+            rec[field] = new_v; delta += new_v - old_v
+        rec['check'] = (rec['check'] or 0) + delta   # check = SUM(W:AG) ใน Excel
+        rec['vacant_total'] = rec['vacant_ready_rent']+rec['vacant_notready_rent']+rec['vacant_ready_sale']+rec['vacant_notready_sale']
+        rec['active_total'] = rec['units_rent']+rec['units_lease_whole']+rec['units_hire_purchase']+rec['units_pending_sale']+rec['units_guarantee']+rec['units_pending_transfer']
+        rec['vacant_ready_total'] = rec['vacant_ready_rent']+rec['vacant_ready_sale']
+        rec['vacant_notready_total'] = rec['vacant_notready_rent']+rec['vacant_notready_sale']
+print('  Sum active_total หลังปรับ:', sum(r['active_total'] for r in raw_rows), '| ระดับหน่วย:', len(active_records))
+print('  Sum vacant_total หลังปรับ:', sum(r['vacant_total'] for r in raw_rows), '| ระดับหน่วย:', len(vacant_new))
+ok = (not unexpected and sum(r['active_total'] for r in raw_rows)==len(active_records) and sum(r['vacant_total'] for r in raw_rows)==len(vacant_new))
+print('  กระทบยอดระดับโครงการ = ระดับหน่วย:', '✅' if ok else '❌ ไม่ลงตัว! หยุดตรวจสอบ')
 
 # ============================================================================
 # STEP 4: เทียบหน่วยว่างเก่า-ใหม่ → CH64 (5 กลุ่ม)
