@@ -547,6 +547,14 @@
     .filter-inner,main,footer.page-footer{padding-left:18px;padding-right:18px;}
   }
 
+  /* ===== Mobile: no pinned zones, page scrolls normally ===== */
+  @media (max-width:768px){
+    header.top, .filter-bar, .split-right{position:static !important;top:auto !important;}
+    .split-right{max-height:none !important;overflow-y:visible !important;}
+    thead th, tfoot td{position:static !important;}
+    .table-scroll{max-height:none !important;overflow-x:auto;overflow-y:visible;-webkit-overflow-scrolling:touch;}
+  }
+
   /* ===== Print ===== */
   @media print{
     body{background:#fff;}
